@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Obsidian — user-specific layout & caches (keep the rest of .obsidian)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.obsidian/plugins/*/data.json
+
+# Obsidian trash
+.trash/
