@@ -74,6 +74,8 @@
 
 - [[Go Scheduler]]
 - [[GMP Scheduler Internals]]
+- [[Go Channel Pitfalls and Internals]]
+- [[Go Map and Slice Thread Safety]]
 - [[Process vs Thread vs Coroutine]]
 - [[Concurrency vs Parallelism]]
 - [[Compare-and-Swap]]

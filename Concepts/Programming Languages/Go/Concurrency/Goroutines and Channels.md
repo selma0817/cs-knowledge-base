@@ -668,6 +668,8 @@ unless results is buffered enough or another goroutine is receiving.
 
 ## Related notes
 
+- [[Go Channel Pitfalls and Internals]] (panic table, who closes, goroutine leaks, nil-channel tricks, `hchan` internals)
+    
 - [[Concurrency vs Parallelism]]
     
 - [[Value Pointer and Ownership]]

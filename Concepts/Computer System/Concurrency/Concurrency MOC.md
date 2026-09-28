@@ -29,6 +29,8 @@ The execution abstractions themselves — process, thread, coroutine — and how
 ## Go concurrency patterns
 
 - [[Goroutines and Channels]]
+- [[Go Channel Pitfalls and Internals]]
+- [[Go Map and Slice Thread Safety]]
 - [[Worker Pool]]
 - [[sync.WaitGroup]]
 - [[Go Scheduler]]
