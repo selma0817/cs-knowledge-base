@@ -18,13 +18,13 @@ The execution abstractions themselves — process, thread, coroutine — and how
 
 ## Synchronization primitives
 
-- [[Mutex]] â€” gives exclusive access to a critical section and protects shared-state invariants.
-- [[Semaphore]] â€” manages a fixed number of permits and limits concurrent resource use.
-- Atomic operations â€” make a single supported read-modify-write operation indivisible.
-- [[Compare-and-Swap]] â€” atomic conditional read-modify-write; the optimistic primitive behind lock-free code and lock fast paths.
-- [[Cache Coherence and MESI]] â€” the hardware foundation (MESI, snooping, cache lines) that makes atomics work across cores.
-- Condition variables â€” allow goroutines or threads to sleep until shared state may satisfy a condition.
-- [[sync.WaitGroup]] â€” waits for a collection of goroutines to finish; it does not protect shared data.
+- [[Mutex]] — gives exclusive access to a critical section and protects shared-state invariants.
+- [[Semaphore]] — manages a fixed number of permits and limits concurrent resource use.
+- Atomic operations — make a single supported read-modify-write operation indivisible.
+- [[Compare-and-Swap]] — atomic conditional read-modify-write; the optimistic primitive behind lock-free code and lock fast paths.
+- [[Cache Coherence and MESI]] — the hardware foundation (MESI, snooping, cache lines) that makes atomics work across cores.
+- Condition variables — allow goroutines or threads to sleep until shared state may satisfy a condition.
+- [[sync.WaitGroup]] — waits for a collection of goroutines to finish; it does not protect shared data.
 
 ## Go concurrency patterns
 

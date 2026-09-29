@@ -205,7 +205,7 @@ func (s *Semaphore) Release() {
 }
 ```
 
-`Wait` releases the mutex while sleeping and reacquires it before returning. The condition must be checked in a loop because waking means â€œthe state may have changed,â€ not â€œthis task is guaranteed a permit.â€ Another task may consume the permit first, or a broadcast may wake several waiters.
+`Wait` releases the mutex while sleeping and reacquires it before returning. The condition must be checked in a loop because waking means “the state may have changed,” not “this task is guaranteed a permit.” Another task may consume the permit first, or a broadcast may wake several waiters.
 
 This does not create infinite implementation recursion. A high-level semaphore may use a mutex and condition variable, while a runtime mutex may use a lower-level semaphore-like parking primitive. At the bottom are hardware atomics, scheduler queues, and OS-specific waiting mechanisms.
 

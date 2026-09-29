@@ -25,7 +25,7 @@ Record append exists so hundreds of producers can append to one file without fir
 
 Record append follows the normal mutation protocol, with extra logic at the primary:
 
-1. The client pushes the record to all replicas of the fileâ€™s last chunk.
+1. The client pushes the record to all replicas of the file’s last chunk.
 2. The primary decides whether the record fits.
 3. If it fits, the primary chooses the offset and tells secondaries to use exactly that offset.
 4. If it does not fit, the primary pads the remaining space, tells secondaries to do the same, and asks the client to retry on the next chunk.
@@ -40,7 +40,7 @@ The original GFS limits one record append to one quarter of its 64 MB maximum ch
 \frac{1}{4}\times 64\text{ MB}=16\text{ MB}
 \]
 
-This bounds worst-case fragmentation from padding. An application appending 100 MB must divide it into records no larger than 16 MB. Each record is atomic individually; the complete 100 MB sequence is not one atomic append, so other clientsâ€™ records may appear between its pieces.
+This bounds worst-case fragmentation from padding. An application appending 100 MB must divide it into records no larger than 16 MB. Each record is atomic individually; the complete 100 MB sequence is not one atomic append, so other clients’ records may appear between its pieces.
 
 ## Why retries can duplicate records
 
@@ -93,4 +93,4 @@ Exactly-once effects usually require application-level identity and deduplicatio
 - [[Filesystem Write Guarantees]]
 - [[GFS Failure Recovery Replica Placement and Checksums]]
 
-[^gfs]: Ghemawat, Gobioff, and Leung, [â€œThe Google File Systemâ€](https://research.google.com/archive/gfs-sosp2003.pdf), Â§Â§2.7 and 3.3.
+[^gfs]: Ghemawat, Gobioff, and Leung, [“The Google File System”](https://research.google.com/archive/gfs-sosp2003.pdf), §§2.7 and 3.3.
