@@ -34,6 +34,15 @@
 - [[Container]]
 - [[Dockerfile vs Docker Compose vs Kubernetes]]
 
+## Post-Training and RL Fine-Tuning
+
+- [[LLM Training MOC]]
+- [[Policy Gradient for LLMs]]
+- [[Advantage Estimation]]
+- [[Policy Ratio and Clipping]]
+- [[GRPO]]
+- [[DAPO]]
+
 ## Backend and Distributed Systems
 
 - [[REST API]]

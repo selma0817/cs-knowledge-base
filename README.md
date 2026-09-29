@@ -10,7 +10,7 @@ This is an [Obsidian](https://obsidian.md) vault: notes are Markdown with `[[wik
 Concepts/
 ├── Computer System/       OS, networking, concurrency, databases, data structures
 ├── Distributed Systems/   Raft, GFS
-├── LLM/                   serving, architecture, retrieval (RAG), context/caching
+├── LLM/                   serving, architecture, retrieval (RAG), context/caching, training (RL fine-tuning: GRPO)
 ├── Programming Languages/ Go, Python, language runtimes
 └── Software Engineering/  API design, auth, messaging, DevOps, reliability
 Interview Prep/            mock interviews
