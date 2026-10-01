@@ -41,6 +41,8 @@
 - [[Advantage Estimation]]
 - [[Policy Ratio and Clipping]]
 - [[GRPO]]
+- [[Rule-Based and Verifiable Rewards]]
+- [[Reward Hacking]]
 - [[DAPO]]
 
 ## Backend and Distributed Systems

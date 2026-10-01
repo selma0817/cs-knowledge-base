@@ -46,9 +46,11 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
 4. [[GRPO]] ✅
    - The full objective, a worked group, why no critic, weak points
 
-5. [[Rule-Based and Verifiable Rewards]]
-   - Answer extraction and checking equivalence; format rewards
-   - [[Reward Hacking]]
+5. [[Rule-Based and Verifiable Rewards]] ✅
+   - Extraction (last complete `\boxed{}`, one-pass brace stack), exact normalization, levels of equivalence
+   - Strict format: why it teaches the format, and the cold-start risk
+   - Partial credit; reward values don't matter under group normalization
+   - [[Reward Hacking]] ✅: checker bugs, blind spots of outcome rewards, reward-model overoptimization
 
 6. [[KL Regularization and Reference Models]]
    - Per-token KL estimators; the reference model for free with LoRA; why DAPO drops KL
