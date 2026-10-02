@@ -16,25 +16,36 @@ aliases:
 | Workflow | edit code on the Mac → push → `git pull` on Linux; Linux commits results only (`results/`) |
 | References | DeepSeekMath (GRPO, arXiv 2402.03300), DAPO (arXiv 2503.14476), TRL `GRPOTrainer` (numerical checks), verl `core_algos.py` |
 
-## Milestones
+## Steps
 
-| | Milestone | Status |
+| Step | What | Status |
 | --- | --- | --- |
-| M1 | Rule-based reward (`reward.py`, 87 tests) | ✅ 2026-10-01 |
-| M0 | Baseline evaluation on GSM8K test | ✅ 2026-10-02 |
-| M3 | GRPO core: `Policy` (LoRA, reference via disabled adapter), log-probs, advantage, loss, training loop, held-out eval every N steps | next |
-| M4 | Diagnostics; run vanilla GRPO until it fails | |
-| M2 | Difficulty buckets from per-question solve rates | |
-| R5 | MATH: dataset-specific gold extraction; `is_equivalent` = string → exact numeric → `math-verify` | |
-| M5 | DAPO switches: Clip-Higher, Dynamic Sampling, Token-level Loss, Overlong Reward Shaping | |
-| M6 | Ablations across seeds | |
+| 1 | Rule-based reward (`reward.py`, 87 tests) | ✅ 2026-10-01 |
+| 2 | Baseline evaluation on GSM8K test | ✅ 2026-10-02 |
+| 3 | GRPO core and first training run: `Policy` (LoRA, reference via disabled adapter), log-probs, advantage, loss, training loop, held-out evaluation every N steps | next |
+| 4 | Diagnostics; run vanilla GRPO until it fails | |
+| 5 | Difficulty-graded data: per-question solve rates on the train split; MATH support (dataset-specific gold extraction; `is_equivalent` = string → exact numeric → `math-verify`) | |
+| 6 | DAPO switches: Clip-Higher, Dynamic Sampling, Token-level Loss, Overlong Reward Shaping | |
+| 7 | Ablations across seeds | |
+
+Step 5 comes after GRPO works on plain GSM8K, so a failing first run has one cause to investigate, and before the DAPO ablations, which run on the final dataset. (Earlier notes and file names use the original labels: M1 = step 1, M0 = step 2, M3 = step 3, M4 = step 4, M2 and R5 = step 5, M5 = step 6, M6 = step 7.)
 
 ## Design decisions
 
 - **Reward:** answer in `\boxed{}`; no box → 0; last complete box counts; exact numeric equality (`Fraction`); fail closed on model output; gold answers validated at load time. Spec: `docs/reward-spec.md`. See [[Rule-Based and Verifiable Rewards]].
 - **Sampling:** temperature 1.0, top-p 1.0, top-k off, repetition penalty 1.0, all set explicitly (the model's defaults differ). See [[Decoding and Sampling Parameters]].
-- **Generation budget:** `max_new_tokens = 512` (decided from the M0 budget test, see [[GRPO DAPO Experiment Log]]).
+- **Generation budget:** `max_new_tokens = 512` (decided from the step 2 budget test, see [[GRPO DAPO Experiment Log]]).
 - **Updates per rollout > 1** (mini-batches), so clipping and Clip-Higher actually act. See [[Policy Ratio and Clipping]].
+
+## Notes on the reference repo (rayyy032/qwen-math-grpo-dapo)
+
+Read for ideas only; my code is my own. What auditing it found:
+
+- **Config shared by every ablation preset:** LoRA r = 32, alpha = 32, dropout 0.05 on all seven projection layers (`q, k, v, o, gate, up, down`); no 8-bit; learning rate 1e-5; group size 8 with **2 questions per step** (16 completions); 100 steps; β = 0 (no KL); `ppo_epochs = 1`. The reference model is a **separately loaded** base model, a second copy of the weights.
+- **One update per rollout means Clip-Higher has nothing to act on** (ρ = 1). Their reported +8 points for Clip-Higher can't come from the clipping mechanism; with one seed and 100 evaluation questions, noise is the likely explanation. LoRA dropout 0.05 may also make ρ noisy, since dropout changes the forward pass between scoring and training.
+- **MATH gold answers are broken:** `_extract_gt` only looks for `####`, so for MATH it returns the whole solution text as the "gold answer".
+- **Their MATH dataset is gone:** `hendrycks/competition_math` was disabled by a DMCA takedown.
+- **Evaluation only at the end of training;** a single clip fraction; no compute accounting; surprisal instead of true entropy.
 
 ## My own experiments (beyond the reproduction)
 

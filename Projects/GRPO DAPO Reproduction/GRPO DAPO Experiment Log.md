@@ -5,7 +5,7 @@ aliases:
 ---
 Dated record of every run in [[GRPO DAPO Project Overview|grpo-dapo]]: what I expected, what ran, what happened, and what I decided. Résumé numbers and interview stories come from here.
 
-## 2026-10-02 · M0 baseline: Qwen2.5-0.5B-Instruct on GSM8K test
+## 2026-10-02 · Step 2 baseline: Qwen2.5-0.5B-Instruct on GSM8K test
 
 **Setup.** All 1,319 test questions; system prompt "Please reason step by step, and put your final answer within \boxed{}."; greedy (1 per question) and sampled (8 per question, T 1.0, top-p 1.0, top-k off, repetition penalty 1.0); `max_new_tokens` 512; seed 0. Code at `031107e` plus a tqdm progress bar; RTX 4070 Ti, torch 2.14.1+cu130, transformers 5.18.0. Runtime 20.6 min (~0.1 s per completion with Hugging Face `generate`). Result: `results/m0/qwen2.5-0.5b-instruct_gsm8k-test.json`.
 
@@ -32,7 +32,7 @@ Groups at step 0 (sampled, 8 per question): **mixed 64.5%**, all wrong 31.9%, al
 
 **Question.** Are the 9.9% truncated answers correct reasoning that ran out of room (→ raise the budget), or drift (→ keep 512)?
 
-**Setup.** Sampled run only, first 200 questions × 8, `max_new_tokens` 1024, otherwise as M0. Runtime 399 s. Result: `results/m0/qwen2.5-0.5b-instruct_gsm8k-test_first200_max-new-tokens-1024.json`.
+**Setup.** Sampled run only, first 200 questions × 8, `max_new_tokens` 1024, otherwise as the baseline. Runtime 399 s. Result: `results/m0/qwen2.5-0.5b-instruct_gsm8k-test_first200_max-new-tokens-1024.json`.
 
 | | 512 (full test) | 1024 (first 200) |
 | --- | --- | --- |
@@ -50,8 +50,8 @@ Groups at step 0 (sampled, 8 per question): **mixed 64.5%**, all wrong 31.9%, al
 
 **Decision: keep `max_new_tokens` = 512 for training.** Drifting answers getting reward 0 is mostly the correct signal, not noise.
 
-**Prediction to check in M3/M4:** GRPO should push the model toward coherent, shorter answers, so the **truncation rate should fall below 9.9%** during training. Track it every step.
+**Prediction to check in steps 3–4:** GRPO should push the model toward coherent, shorter answers, so the **truncation rate should fall below 9.9%** during training. Track it every step.
 
 ## Next
 
-M3: the GRPO core (`Policy` class with LoRA and the reference model via a disabled adapter, log-probs, group advantage, clipped loss, training loop, held-out evaluation every N steps, run metadata and per-step metrics).
+Step 3: the GRPO core (`Policy` class with LoRA and the reference model via a disabled adapter, log-probs, group advantage, clipped loss, training loop, held-out evaluation every N steps, run metadata and per-step metrics).
