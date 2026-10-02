@@ -79,5 +79,6 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
 ## Related notes
 
 - [[Interview MOC]]
+- [[Decoding and Sampling Parameters]]
 - [[LLM Serving]]
 - [[Quantization]]

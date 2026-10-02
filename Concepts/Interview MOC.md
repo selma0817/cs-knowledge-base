@@ -27,6 +27,7 @@
 ## Serving and Infrastructure
 
 - [[LLM Serving]]
+- [[Decoding and Sampling Parameters]]
 - [[Continuous Batching and PagedAttention]]
 - [[Prompt Caching and Statelessness]]
 - [[API Gateway]]
