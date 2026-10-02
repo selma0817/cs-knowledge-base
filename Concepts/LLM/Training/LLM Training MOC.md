@@ -78,6 +78,7 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
 
 ## Related notes
 
+- [[GRPO DAPO Project Overview]] (hands-on project: reproducing GRPO and DAPO)
 - [[Interview MOC]]
 - [[Decoding and Sampling Parameters]]
 - [[LLM Serving]]

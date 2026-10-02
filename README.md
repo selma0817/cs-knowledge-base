@@ -14,6 +14,7 @@ Concepts/
 ├── Programming Languages/ Go, Python, language runtimes
 └── Software Engineering/  API design, auth, messaging, DevOps, reliability
 Interview Prep/            mock interviews
+Projects/                  hands-on projects: overview + experiment log per project
 ```
 
 Start from `Concepts/Interview MOC.md` — a Map of Content linking the notes by topic.
