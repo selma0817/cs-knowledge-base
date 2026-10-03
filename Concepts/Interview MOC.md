@@ -41,6 +41,8 @@
 - [[Policy Gradient for LLMs]]
 - [[Advantage Estimation]]
 - [[Policy Ratio and Clipping]]
+- [[KL Regularization and Reference Models]]
+- [[LoRA and QLoRA]]
 - [[GRPO]]
 - [[Rule-Based and Verifiable Rewards]]
 - [[Reward Hacking]]

@@ -52,11 +52,15 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
    - Partial credit; reward values don't matter under group normalization
    - [[Reward Hacking]] ✅: checker bugs, blind spots of outcome rewards, reward-model overoptimization
 
-6. [[KL Regularization and Reference Models]]
-   - Per-token KL estimators; the reference model for free with LoRA; why DAPO drops KL
+6. [[KL Regularization and Reference Models]] ✅
+   - Why KL is estimated from sampled tokens; k1 vs k3 (unbiased and never negative)
+   - KL in the loss (GRPO) vs in the reward (PPO); why DAPO drops it; keep logging it
+   - The reference model for free with LoRA (adapter disabled)
 
-7. [[LoRA and QLoRA]]
-   - Low-rank adapters, memory accounting; connects to [[Quantization]]
+7. [[LoRA and QLoRA]] ✅
+   - Rank, B·A, why B = 0 and A random; parameter counts for Qwen2.5-0.5B
+   - RL choices: all layers, small rank, ~10× learning rate, dropout 0
+   - Where training memory goes (logits!); micro-batching, gradient checkpointing; QLoRA's NF4; connects to [[Quantization]]
 
 8. [[RL Training Metrics]]
    - Entropy, KL, response length, fraction of groups with the same reward, clip fraction
