@@ -36,6 +36,8 @@ Step 5 comes after GRPO works on plain GSM8K, so a failing first run has one cau
 - **Sampling:** temperature 1.0, top-p 1.0, top-k off, repetition penalty 1.0, all set explicitly (the model's defaults differ). See [[Decoding and Sampling Parameters]].
 - **Generation budget:** `max_new_tokens = 512` (decided from the step 2 budget test, see [[GRPO DAPO Experiment Log]]).
 - **Updates per rollout > 1** (mini-batches), so clipping and Clip-Higher actually act. See [[Policy Ratio and Clipping]].
+- **KL: β = 0 in every ablation run** (vanilla GRPO included), so the ablations isolate DAPO's four techniques; KL is still logged as a drift alarm. **One extra run at β = 0.04** (DeepSeekMath's value) shows what the KL term does. See [[KL Regularization and Reference Models]].
+- **LoRA:** all 7 projection layers, r = 16, α = 32, dropout 0, learning rate 1e-5 to start; reference model = the same model with the adapter disabled. See [[LoRA and QLoRA]].
 
 ## Notes on the reference repo (rayyy032/qwen-math-grpo-dapo)
 
