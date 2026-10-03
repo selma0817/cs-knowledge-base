@@ -28,6 +28,7 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
 
 1. [[Policy Gradient for LLMs]] ✅
    - Per-token log-probs; generating vs scoring (teacher forcing)
+   - In practice: shift by one, completion mask including the end token, fp32 logsumexp, same code path for logp_old/logp_new, the ρ ≈ 1 invariant
    - The update: raise tokens of better-than-average answers, lower worse ones
    - Credit assignment with outcome rewards; why RL is more fragile than SFT
 

@@ -46,6 +46,27 @@ SCORE  (one forward pass over the fixed text, called "teacher forcing")
 
 Any model can score any fixed text. That is how the current model, the rollout snapshot (π_old) and the reference model (π_ref) can all give log-probs for the **same stored answer** without generating it again.
 
+### Computing per-token log-probs in practice
+
+These log-probs feed `logp_old`, `logp_ref` and `logp_new`; small errors in them become fake policy movement in ρ ([[Policy Ratio and Clipping]]).
+
+```text
+index:      0   1   2   3   4   5   6           7    8    9
+input_ids: [p1  p2  p3  a1  a2  a3  <|im_end|>  pad  pad  pad]     right padding
+            └ prompt ┘  └── completion ───────┘
+
+logits[:, :-1] scores input_ids[:, 1:]        output at t predicts token t+1
+scored tokens:  p2  p3  a1  a2  a3  <|im_end|>  pad  pad  pad
+loss mask:      0   0   1   1   1   1           0    0    0
+```
+
+- **Shift by one:** `logits[:, :-1]` pairs with `input_ids[:, 1:]`. The last output has nothing to score; the first token is never scored.
+- **Mask:** every **completion** token counts (each is a decision; all share the answer's Â), **including the end token**; prompt and padding don't. Masking the end token means "stop here" is never reinforced, so the model can't learn to stop (a classic bug in SFT too). Build the mask from the completion length (through the first end token), not from `token != pad_token_id`: for Qwen the pad token `<|endoftext|>` is also an end token.
+- **Gather immediately:** `logp = logit[token] − logsumexp(logits)`, per micro-batch, in **fp32**. This avoids the full `[batch, tokens, 151,936]` log-softmax tensor ([[LoRA and QLoRA]]).
+- **Precision:** ρ = exp(logp_new − logp_old) compares two nearly equal numbers. bf16's rounding step is ~0.125 near a logit of 20, so an error of 0.06 would read as ρ ≈ 1.06, a fake 6% move against a ±20% clip band. Compute `logp_old` and `logp_new` with the **same code path** (dtype, padding, batching), and recompute `logp_old` with a scoring pass instead of taking `generate`'s scores (incremental KV-cache decoding rounds differently).
+- **Padding for scoring:** use right padding (real tokens start at position 0, as in `generate`) or pass `position_ids`. With RoPE, attention depends only on relative position, so a uniform shift from left padding cancels mathematically, but it still changes rounding.
+- **Invariant check:** at the first optimizer step after a rollout, `max |logp_new − logp_old|` should be ≈ 0. Test it and log it; if it isn't, the shift, mask, precision or padding is wrong.
+
 ## The update
 
 ```text
