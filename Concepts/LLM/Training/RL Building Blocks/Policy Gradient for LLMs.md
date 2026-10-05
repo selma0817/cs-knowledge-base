@@ -60,6 +60,7 @@ scored tokens:  p2  p3  a1  a2  a3  <|im_end|>  pad  pad  pad
 loss mask:      0   0   1   1   1   1           0    0    0
 ```
 
+- **Score the token ids that were generated; never re-tokenize the decoded text.** Decode → encode is not the identity: the model can *sample* a non-canonical split ("T" + "he", `[51, 383]`) that re-tokenizes to the canonical one ("The", `[785]`), so you would push tokens the model never chose, with lengths that no longer match the masks; and text decoded with `skip_special_tokens=True` has lost `<|im_end|>`, so the stop decision would never be trained. The ρ ≈ 1 check can't catch this (old and new would be scored on the same wrong sequence), so it has to be a design rule.
 - **Shift by one:** `logits[:, :-1]` pairs with `input_ids[:, 1:]`. The last output has nothing to score; the first token is never scored.
 - **Mask:** every **completion** token counts (each is a decision; all share the answer's Â), **including the end token**; prompt and padding don't. Masking the end token means "stop here" is never reinforced, so the model can't learn to stop (a classic bug in SFT too). Build the mask from the completion length (through the first end token), not from `token != pad_token_id`: for Qwen the pad token `<|endoftext|>` is also an end token.
 - **Gather immediately:** `logp = logit[token] − logsumexp(logits)`, per micro-batch, in **fp32**. This avoids the full `[batch, tokens, 151,936]` log-softmax tensor ([[LoRA and QLoRA]]).

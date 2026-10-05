@@ -70,6 +70,15 @@ Write u = A·x and let g be the gradient arriving at the layer's output:
 | Dropout | **0** | dropout changes the forward pass between scoring `logp_old` and `logp_new`, making ρ noisy (exception: the very first step, where B = 0 so the adapter outputs 0 for any mask) |
 | Reference model | the same model with the adapter **disabled** (`with model.disable_adapter():`) | the base weights never change, so π_ref costs one forward pass and no extra memory, vs a second copy (1 GB at 0.5B, 14 GB at 7B) |
 
+## Make sure only the adapter trains
+
+If a bug leaves the base weights trainable (`requires_grad=True`), training still runs, but:
+- **memory** grows by gradients + Adam state for every parameter (~5 GB extra at 0.5B), likely running out on a 12 GB GPU;
+- **the reference model breaks:** disabling the adapter now returns the *updated* base, so KL measures only the adapter's share of the drift and under-reports it;
+- **checkpoints lose training:** `save_pretrained` on a PEFT model saves only the adapter, so base-weight changes are silently discarded and the saved model isn't the one you trained.
+
+Catch it before any GPU time with a CPU test on a tiny model: copy the base weights, run one training step, and assert they are bit-identical (`torch.equal`) while some LoRA weights changed; and assert every trainable parameter name contains `lora_`. (Passing all parameters to the optimizer is harmless only if the base weights have `requires_grad=False`: parameters without gradients are skipped.)
+
 ## QLoRA
 
 - The frozen base weights are stored in **4-bit NF4** ("NormalFloat4", a format designed for bell-curve-distributed weights), with the quantization constants themselves quantized ("double quantization").
