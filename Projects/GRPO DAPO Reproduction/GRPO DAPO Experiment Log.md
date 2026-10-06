@@ -68,18 +68,18 @@ Also verified that `top_k=0` really disables top-k in transformers 5.18: with `o
 
 | Metric | Start | Predicted at step 100 | Reasoning | Result |
 | --- | --- | --- | --- | --- |
-| Sampled format rate | 77.9% | > 95%, mostly within ~30 steps | boxing gets the big push; shared tokens cancel | |
-| Sampled pass@1 (T = 1) | 31.5% | ~38–45% | RL sharpens the T = 1 distribution | |
-| Greedy accuracy | 47.5% | ~50–54% | smaller gain; nanogrpo got +4 to +6 points with similar completions | |
-| Greedy − sampled gap | 16 points | shrinks | sharpening moves sampling toward greedy | |
-| pass@8 (final) | 68.1% | about flat (66–72%) | RL mostly makes existing solutions reliable | |
-| Truncation (sampled) | 9.9% | falls to ~2–5% | drifting answers get 0; the end token is trained | |
-| Mixed / all-correct groups | 64.5% / 3.6% | mixed ~60%, all-correct ~10–15% | rising accuracy turns easy groups all-correct | |
-| Entropy | step 1 value | gradually falling | sharpening; whether it collapses is step 4 | |
-| KL to the start | 0 | small, rising (~1e-3–1e-2) | lr 1e-5, LoRA, 100 steps | |
-| Clip fractions | 0 | low (< ~2%), mostly in updates 2–4 | small learning rate | |
-| Health metric | | ≈ 0 every step | the invariant | |
-| Step time | | ~40–60 s; ~1.5–2 h total | M0 throughput | |
+| Sampled format rate | 77.9% | > 95%, mostly within ~30 steps | boxing gets the big push; shared tokens cancel | **96.7%** (final); 95% by step 30 ✅ |
+| Sampled pass@1 (T = 1) | 31.5% | ~38–45% | RL sharpens the T = 1 distribution | **49.8%** ✅ (better than predicted) |
+| Greedy accuracy | 47.5% | ~50–54% | smaller gain; nanogrpo got +4 to +6 points with similar completions | **51.6%** ✅ |
+| Greedy − sampled gap | 16 points | shrinks | sharpening moves sampling toward greedy | **1.8 points** ✅ (far more than expected) |
+| pass@8 (final) | 68.1% | about flat (66–72%) | RL mostly makes existing solutions reliable | **77.3%** ❌ (+9 points) |
+| Truncation (sampled) | 9.9% | falls to ~2–5% | drifting answers get 0; the end token is trained | **3.5%** (training 6.6% → 1.3%) ✅ |
+| Mixed / all-correct groups | 64.5% / 3.6% | mixed ~60%, all-correct ~10–15% | rising accuracy turns easy groups all-correct | mixed ~50–55%, **all-correct ~37–40%** ❌ (far higher) |
+| Entropy | step 1 value | gradually falling | sharpening; whether it collapses is step 4 | **0.34 → 0.08** (−76%), still falling ⚠️ |
+| KL to the start | 0 | small, rising (~1e-3–1e-2) | lr 1e-5, LoRA, 100 steps | **0.056** ❌ (higher) |
+| Clip fractions | 0 | low (< ~2%), mostly in updates 2–4 | small learning rate | **~0.1%** ✅ |
+| Health metric | | ≈ 0 every step | the invariant | **exactly 0 at every step** ✅ |
+| Step time | | ~40–60 s; ~1.5–2 h total | M0 throughput | **53 s**; 2 h 22 m (micro-batch 4) ✅ |
 
 **Uncertainties.** The learning rate (flat reward after ~30 steps → too low; plunging entropy and degrading outputs → too high). Noise: one seed and 200 evaluation questions give about ±3.5 points on the evaluation curve.
 
@@ -91,6 +91,47 @@ Also verified that `top_k=0` really disables top-k in transformers 5.18: with `o
 
 README smoke command (2 questions × 4 samples, 2 updates, micro-batches of 4, 2 steps), code at `dd3f832`, no uncommitted changes; torch 2.14.1+cu130. Result: `results/train/smoke/`. **Health metric exactly 0.0** at both steps (on CUDA the no-gradient and gradient scoring passes match exactly; the Mac gave 6.5e-5). Ratio range 0.78–1.39 with zero high-clip fraction (tokens above 1.2 had Â < 0, the harmful direction, which is never clipped; large ratios come from low-probability tokens). KL 2–3e-4. Peak GPU memory 6.4 GB at micro-batch 4; the logits-related part doubles at micro-batch 8, so ~11–12 GB is expected for the real run, within the 16 GB card. Speed: rollout 7–9 s for 8 completions, scoring 0.3 s, update 0.5 s; extrapolated ~40 s per step at full size and ~1.75–2 h for the 100-step run including evaluations.
 
+## 2026-10-06 · Step 3 · `vanilla_s0`: results
+
+**Run.** `scripts/train.py --preset vanilla --micro-batch-size 4` (micro-batches of 8 ran out of GPU memory: the fp32 log-softmax over the 151,936-entry vocabulary is kept for the backward pass). Code at `0a78f2a`, no uncommitted changes. 100 steps, 25,600 completions, 7.47M generated tokens, 2 h 22 m, peak 7.78 GiB. Results: `results/train/vanilla_s0_20261006_154502/`; plots: `results/plots/vanilla_s0/`. Predictions vs results are filled in above.
+
+| Final evaluation (all 1,319 test questions) | Baseline | Step 100 | Change |
+| --- | --- | --- | --- |
+| Greedy accuracy | 47.5% | 51.6% | +4.1 |
+| Sampled pass@1 | 31.5% | 49.8% | +18.3 |
+| pass@8 | 68.1% | 77.3% | +9.2 |
+| Sampled format rate | 77.9% | 96.7% | +18.8 |
+| Sampled truncation | 9.9% | 3.5% | −6.4 |
+
+**Success criteria: all met.** (1) 100 steps, health metric exactly 0. (2) Sampled pass@1 +18 points. (3) Format 96.7%. (4) Truncation 9.9% → 3.5%. (5) Training reward (0.45 → 0.68) and held-out pass@1 (0.32 → 0.52) rose together; unparseable rate averaged 0.8%.
+
+**Lessons.**
+1. **Most of the gain is sharpening, not new ability.** Greedy +4, sampled +18; the greedy–sampled gap fell from 16 to 2 points while entropy fell 76%. GRPO mainly made T = 1 sampling behave like the model's best guess (fewer drifting, unboxed and truncated answers).
+2. **pass@8 rose because the base model lost answers to format and drift** (22% unboxed, 10% truncated at T = 1). The "RL doesn't raise pass@k" result concerns large k on cleanly formatted models; testing it would need something like pass@64.
+3. **Zero-variance groups took over faster than predicted.** By steps 90–100, ~37% of groups were all correct and ~10% all wrong, so nearly half of each batch gave no gradient (mixed 72% → ~50%). Every question was new (first epoch), so this is real improvement. This is the problem Dynamic Sampling targets.
+4. **Entropy is still falling, and greedy accuracy on the 200-question curve peaked at 57.5% (step 70) and ended at 52%.** With one seed and 200 questions this may be noise, but "does entropy collapse and accuracy then degrade?" is step 4's question.
+5. **Clipping is rare here (~0.1% of tokens),** so a Clip-Higher run at these settings (lr 1e-5, 4 updates per rollout) would likely look identical to vanilla. Clip-Higher's effect should grow with more updates per rollout: the planned Clip-Higher × updates-per-rollout experiment tests exactly this.
+
+**Compared with rayyy's GRPO baseline (32% on 100 questions at 256 tokens):** 51.6% greedy / 49.8% pass@1 on the full test set at 512 tokens. The gap is large enough to check before continuing (next entry).
+
+## 2026-10-06 · Replication of rayyy's setup: plan and predictions (written before the run)
+
+**Why.** Our numbers differ a lot from rayyy's (base 21% / format 34%; GRPO 32%). The hypothesis is that their 256-token budget (training and evaluation) truncates most answers (this model's greedy median is 296 tokens). If our pipeline reproduces their numbers under their settings, our pipeline is consistent and the difference is the setup, not a bug.
+
+**Setup (matching their config.py).** `--preset vanilla --run-name rayyy_repro_s0 --max-new-tokens 256 --questions-per-step 2 --samples-per-question 8 --num-minibatches 1 --micro-batch-size 8 --lora-r 32 --lora-alpha 32 --lora-dropout 0.05 --eval-questions 100 --eval-samples 4`: 16 completions per step, one update per rollout, learning rate 1e-5, β 0, 100 steps. Differences that remain: system prompt wording; their 100 evaluation questions vs our random 100 from the test set; their near-greedy T = 0.01 vs our greedy; their answer checker; T4 fp16/fp32 vs our bf16.
+
+| Metric | rayyy | Predicted (ours, same settings) | Reasoning | Result |
+| --- | --- | --- | --- | --- |
+| Greedy accuracy at step 0 | 21% | ~20–25% | most greedy answers exceed 256 tokens and lose their box | |
+| Greedy format rate at step 0 | 34% | ~30–40% | same | |
+| Greedy accuracy at step 100 | 32% | ~28–36% | GRPO learns to finish within 256 tokens; ±5 points of noise on 100 questions | |
+| Format rate at step 100 | 76% | ~70–85% | same | |
+| Mean length at step 100 | 189 | ~180–210 tokens | the 256 budget pushes length down | |
+| Health metric | — | **> 0** (not exactly 0) | LoRA dropout 0.05 changes the forward pass between scoring passes (as predicted in the LoRA session) | |
+| Runtime | ~40 min (T4) | ~30–40 min | 16 completions per step at ≤ 256 tokens | |
+
+A cheaper check first: applying a 256-token cut to the existing baseline completions (counting answers longer than 256 tokens as wrong and unboxed) should already give roughly 21% / 34% for greedy.
+
 ## Next
 
-Run `shape_check`, then `vanilla_s0`; fill in the Result column; then step 4 (run vanilla GRPO longer until it fails).
+Run the 256-token check on the baseline completions, then `rayyy_repro_s0`; fill in its Result column; then step 4 (run vanilla GRPO longer until it fails).
