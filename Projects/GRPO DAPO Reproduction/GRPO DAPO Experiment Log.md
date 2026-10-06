@@ -52,6 +52,41 @@ Groups at step 0 (sampled, 8 per question): **mixed 64.5%**, all wrong 31.9%, al
 
 **Prediction to check in steps 3–4:** GRPO should push the model toward coherent, shorter answers, so the **truncation rate should fall below 9.9%** during training. Track it every step.
 
+## 2026-10-06 · Mac smoke test of the training loop
+
+Two steps (2 questions × 4 samples, 2 updates per rollout), real model on the Mac GPU, W&B off. Code at `35268ea` with no uncommitted changes. Everything ran end to end (evaluation at step 0, rollout, scoring, updates, final checkpoint, `summary.json`). 8,798,208 trainable parameters of 502,830,976, matching the ≈ 8.8M estimate for r = 16 on all 7 projections. Health metric `max |logp_new − logp_old|` at each rollout's first update: 6.5e-5 and 3.6e-5 (below the 1e-4 warning; not exactly 0 because the no-gradient and gradient passes use slightly different kernels). 1.5–2.5 min per step on the Mac, so real runs go on the 4070 Ti.
+
+Also verified that `top_k=0` really disables top-k in transformers 5.18: with `output_scores`, all vocabulary entries stay finite, while omitting `top_k` leaves only 20 (Qwen's default). The "generation flags may be ignored" warning is harmless.
+
+## 2026-10-06 · Step 3 · `vanilla_s0`: plan and predictions (written before the run)
+
+**What it tests.** One configuration, `vanilla` (GRPO, no DAPO techniques, β = 0), against the untrained model (the baseline, and the run's own step-0 evaluation, identical to it since LoRA starts with B = 0). It establishes that training works and gives the reference curve for steps 4–7. It is **not** an ablation: one configuration, one seed.
+
+**Setup.** `uv run python scripts/train.py --preset vanilla --run-name vanilla_s0` on the RTX 4070 Ti: Qwen2.5-0.5B-Instruct + LoRA (all 7 projections, r 16, α 32, dropout 0), 32 questions × 8 samples per step, 4 updates per rollout (micro-batches of 8), learning rate 1e-5, ε 0.2/0.2, β 0 (KL logged), `sample` averaging, T = 1, 512 tokens, 100 steps (3,200 GSM8K train questions). Evaluation at step 0 and every 10 steps on 200 fixed test questions (greedy + 4 samples); final evaluation on all 1,319 (greedy + 8 samples).
+
+**Compared with rayyy's "GRPO baseline" row (32%):** 16× more completions per step (256 vs 16), 4 updates per rollout instead of 1 (so clipping acts), LoRA dropout 0 instead of 0.05, 512 tokens instead of 256, held-out evaluation every 10 steps and on the full test set instead of once on 100 questions.
+
+| Metric | Start | Predicted at step 100 | Reasoning | Result |
+| --- | --- | --- | --- | --- |
+| Sampled format rate | 77.9% | > 95%, mostly within ~30 steps | boxing gets the big push; shared tokens cancel | |
+| Sampled pass@1 (T = 1) | 31.5% | ~38–45% | RL sharpens the T = 1 distribution | |
+| Greedy accuracy | 47.5% | ~50–54% | smaller gain; nanogrpo got +4 to +6 points with similar completions | |
+| Greedy − sampled gap | 16 points | shrinks | sharpening moves sampling toward greedy | |
+| pass@8 (final) | 68.1% | about flat (66–72%) | RL mostly makes existing solutions reliable | |
+| Truncation (sampled) | 9.9% | falls to ~2–5% | drifting answers get 0; the end token is trained | |
+| Mixed / all-correct groups | 64.5% / 3.6% | mixed ~60%, all-correct ~10–15% | rising accuracy turns easy groups all-correct | |
+| Entropy | step 1 value | gradually falling | sharpening; whether it collapses is step 4 | |
+| KL to the start | 0 | small, rising (~1e-3–1e-2) | lr 1e-5, LoRA, 100 steps | |
+| Clip fractions | 0 | low (< ~2%), mostly in updates 2–4 | small learning rate | |
+| Health metric | | ≈ 0 every step | the invariant | |
+| Step time | | ~40–60 s; ~1.5–2 h total | M0 throughput | |
+
+**Uncertainties.** The learning rate (flat reward after ~30 steps → too low; plunging entropy and degrading outputs → too high). Noise: one seed and 200 evaluation questions give about ±3.5 points on the evaluation curve.
+
+**Success criteria.** (1) Completes 100 steps without running out of memory, health metric ≈ 0. (2) Held-out sampled pass@1 improves by more than 5 points. (3) Format rate above 95%. (4) Truncation falls. (5) No sign of reward hacking: training reward and held-out accuracy rise together; unparseable rate stays ~1%.
+
+**Before the long run:** a one-step check with real shapes (`--max-steps 1 --questions-per-step 8 --eval-questions 8 --no-final-eval --wandb-mode disabled --run-name shape_check`) to read peak GPU memory, step time and the health metric on CUDA. If memory is above ~11 GB, use `--micro-batch-size 4`.
+
 ## Next
 
-Step 3: the GRPO core (`Policy` class with LoRA and the reference model via a disabled adapter, log-probs, group advantage, clipped loss, training loop, held-out evaluation every N steps, run metadata and per-step metrics).
+Run `shape_check`, then `vanilla_s0`; fill in the Result column; then step 4 (run vanilla GRPO longer until it fails).
