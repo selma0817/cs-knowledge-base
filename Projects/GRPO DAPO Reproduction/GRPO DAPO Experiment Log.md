@@ -85,7 +85,11 @@ Also verified that `top_k=0` really disables top-k in transformers 5.18: with `o
 
 **Success criteria.** (1) Completes 100 steps without running out of memory, health metric ≈ 0. (2) Held-out sampled pass@1 improves by more than 5 points. (3) Format rate above 95%. (4) Truncation falls. (5) No sign of reward hacking: training reward and held-out accuracy rise together; unparseable rate stays ~1%.
 
-**Before the long run:** a one-step check with real shapes (`--max-steps 1 --questions-per-step 8 --eval-questions 8 --no-final-eval --wandb-mode disabled --run-name shape_check`) to read peak GPU memory, step time and the health metric on CUDA. If memory is above ~11 GB, use `--micro-batch-size 4`.
+**Before the long run:** see the GPU smoke test below. The first step of the real run doubles as the memory check: peak GPU memory should stay below ~15 GB (16 GB card); if it runs out of memory, use `--micro-batch-size 4`.
+
+## 2026-10-06 · GPU smoke test (RTX 4070 Ti SUPER, 16 GB)
+
+README smoke command (2 questions × 4 samples, 2 updates, micro-batches of 4, 2 steps), code at `dd3f832`, no uncommitted changes; torch 2.14.1+cu130. Result: `results/train/smoke/`. **Health metric exactly 0.0** at both steps (on CUDA the no-gradient and gradient scoring passes match exactly; the Mac gave 6.5e-5). Ratio range 0.78–1.39 with zero high-clip fraction (tokens above 1.2 had Â < 0, the harmful direction, which is never clipped; large ratios come from low-probability tokens). KL 2–3e-4. Peak GPU memory 6.4 GB at micro-batch 4; the logits-related part doubles at micro-batch 8, so ~11–12 GB is expected for the real run, within the 16 GB card. Speed: rollout 7–9 s for 8 completions, scoring 0.3 s, update 0.5 s; extrapolated ~40 s per step at full size and ~1.75–2 h for the 100-step run including evaluations.
 
 ## Next
 

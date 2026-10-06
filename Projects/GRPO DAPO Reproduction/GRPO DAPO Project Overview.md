@@ -12,7 +12,7 @@ aliases:
 | --- | --- |
 | Models | `Qwen/Qwen2.5-0.5B-Instruct` (1.5B later) |
 | Data | GSM8K (`openai/gsm8k`); later MATH: `EleutherAI/hendrycks_math` train, `HuggingFaceH4/MATH-500` eval |
-| Hardware | RTX 4070 Ti (12 GB, Linux) for runs; Mac for code and CPU tests; Azure GPUs for 1.5B / multi-seed |
+| Hardware | RTX 4070 Ti SUPER (16 GB, Linux) for runs; Mac for code and CPU tests; Azure GPUs for 1.5B / multi-seed |
 | Workflow | edit code on the Mac → push → `git pull` on Linux; Linux commits results only (`results/`) |
 | References | DeepSeekMath (GRPO, arXiv 2402.03300), DAPO (arXiv 2503.14476), TRL `GRPOTrainer` (numerical checks), verl `core_algos.py` |
 
