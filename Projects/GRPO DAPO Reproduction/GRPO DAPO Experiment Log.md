@@ -126,8 +126,10 @@ All predictions are for `rayyy_repro_s0` (none come from `vanilla_s0`, which tra
 
 | Metric | rayyy | Predicted | Reasoning | Result |
 | --- | --- | --- | --- | --- |
-| Greedy accuracy | 21% | ~20–25% | most greedy answers exceed 256 tokens and lose their box | |
-| Greedy format rate | 34% | ~30–40% | same | |
+| Greedy accuracy | 21% | ~20–25% | most greedy answers exceed 256 tokens and lose their box | **23.0%** ✅ (256-token cut on all 1,319 baseline completions) |
+| Greedy format rate | 34% | ~30–40% | same | **33.5%** ✅ |
+
+**Part A confirmed (2026-10-06).** Applying a 256-token cut to the baseline completions: **67.3% of greedy answers exceed 256 tokens**; greedy accuracy 23.0% and format 33.5% (rayyy: 21% / 34%, on 100 questions with about ±4 points of noise); sampled pass@1 16.1%, pass@8 39.5%. Our pipeline reproduces their baseline: the gap to our 47.5% is the token budget, not a bug. Under a 256-token budget, two thirds of answers get reward 0 for length alone, so GRPO's strongest signal there is to finish sooner, consistent with their format rate rising 34% → 76% and average length 189.
 
 **B. After 100 steps of GRPO trained at 256 tokens with rayyy's settings** (step 100 of the replication run). Only the replication run can check these.
 
