@@ -120,13 +120,22 @@ README smoke command (2 questions × 4 samples, 2 updates, micro-batches of 4, 2
 
 **Setup (matching their config.py).** `--preset vanilla --run-name rayyy_repro_s0 --max-new-tokens 256 --questions-per-step 2 --samples-per-question 8 --num-minibatches 1 --micro-batch-size 8 --lora-r 32 --lora-alpha 32 --lora-dropout 0.05 --eval-questions 100 --eval-samples 4`: 16 completions per step, one update per rollout, learning rate 1e-5, β 0, 100 steps. Differences that remain: system prompt wording; their 100 evaluation questions vs our random 100 from the test set; their near-greedy T = 0.01 vs our greedy; their answer checker; T4 fp16/fp32 vs our bf16.
 
-| Metric | rayyy | Predicted (ours, same settings) | Reasoning | Result |
+All predictions are for `rayyy_repro_s0` (none come from `vanilla_s0`, which trained at 512 tokens). Table reorganized after writing to separate the two models; the predicted values are unchanged.
+
+**A. The untrained model under a 256-token budget** (step 0 of the replication run). Checkable two ways: the replication run's step-0 evaluation (100 questions), and a 256-token cut applied to the existing baseline completions (all 1,319 questions, no GPU needed).
+
+| Metric | rayyy | Predicted | Reasoning | Result |
 | --- | --- | --- | --- | --- |
-| Greedy accuracy at step 0 | 21% | ~20–25% | most greedy answers exceed 256 tokens and lose their box | |
-| Greedy format rate at step 0 | 34% | ~30–40% | same | |
-| Greedy accuracy at step 100 | 32% | ~28–36% | GRPO learns to finish within 256 tokens; ±5 points of noise on 100 questions | |
-| Format rate at step 100 | 76% | ~70–85% | same | |
-| Mean length at step 100 | 189 | ~180–210 tokens | the 256 budget pushes length down | |
+| Greedy accuracy | 21% | ~20–25% | most greedy answers exceed 256 tokens and lose their box | |
+| Greedy format rate | 34% | ~30–40% | same | |
+
+**B. After 100 steps of GRPO trained at 256 tokens with rayyy's settings** (step 100 of the replication run). Only the replication run can check these.
+
+| Metric | rayyy | Predicted | Reasoning | Result |
+| --- | --- | --- | --- | --- |
+| Greedy accuracy | 32% | ~28–36% | GRPO learns to finish within 256 tokens; ±5 points of noise on 100 questions | |
+| Format rate | 76% | ~70–85% | same | |
+| Mean length | 189 | ~180–210 tokens | the 256 budget pushes length down | |
 | Health metric | — | **> 0** (not exactly 0) | LoRA dropout 0.05 changes the forward pass between scoring passes (as predicted in the LoRA session) | |
 | Runtime | ~40 min (T4) | ~30–40 min | 16 completions per step at ≤ 256 tokens | |
 
