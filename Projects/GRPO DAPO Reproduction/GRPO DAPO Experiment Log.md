@@ -140,6 +140,7 @@ All predictions are for `rayyy_repro_s0` (none come from `vanilla_s0`, which tra
 | Mean length | 189 | ~180–210 tokens | the 256 budget pushes length down | |
 | Health metric | — | **> 0** (not exactly 0) | LoRA dropout 0.05 changes the forward pass between scoring passes (as predicted in the LoRA session) | |
 | Runtime | ~40 min (T4) | ~30–40 min | 16 completions per step at ≤ 256 tokens | |
+| Clip fraction | — | **> 0, entirely from dropout noise** (added before the run) | with one update per rollout ρ would be exactly 1 and nothing could be clipped; `logp_old` is scored with dropout off, `logp_new` with dropout on | |
 
 A cheaper check first: applying a 256-token cut to the existing baseline completions (counting answers longer than 256 tokens as wrong and unboxed) should already give roughly 21% / 34% for greedy.
 
