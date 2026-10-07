@@ -178,15 +178,41 @@ Also, **their "average length 189" is the last training step's rollout mean** ov
 
 | Metric | `rayyy_repo_s0` (no bonus) | rayyy | Predicted | Reasoning | Result |
 | --- | --- | --- | --- | --- | --- |
-| Greedy format rate (100 questions, step 100) | 47% | 76% | ~60–80% | all-wrong groups with mixed boxing now give a gradient toward finishing and boxing | |
-| Greedy accuracy | 33% | 32% | ~28–38% | the bonus doesn't reward correctness; finishing in time rescues a few correct answers | |
-| Accuracy among boxed answers | 70% | 42% | ~45–60% | most of the extra boxes are wrong answers | |
-| Training-sample length (last 10 steps) | 237 | 189 (last step) | ~200–225 | a box requires stopping before 256 tokens | |
-| `groups/nonzero_variance` (steps 1–10) | ~0.6 (equal to mixed) | — | ~0.8–0.9 | an all-wrong group now has signal whenever some answers box and some don't | |
-| Runtime | 29 min | ~40 min (T4) | ~30 min | same work per step | |
+| Greedy format rate (100 questions, step 100) | 47% | 76% | ~60–80% | all-wrong groups with mixed boxing now give a gradient toward finishing and boxing | **61%** ✅ just inside (full test 56.5%) |
+| Greedy accuracy | 33% | 32% | ~28–38% | the bonus doesn't reward correctness; finishing in time rescues a few correct answers | **37%** ✅ (full test 32.4%) |
+| Accuracy among boxed answers | 70% | 42% | ~45–60% | most of the extra boxes are wrong answers | **61%** ❌ just above (37 / 61); 57% on the full test |
+| Training-sample length (last 10 steps) | 237 | 189 (last step) | ~200–225 | a box requires stopping before 256 tokens | **225** ✅ at the edge (last step 220) |
+| `groups/nonzero_variance` (steps 1–10) | 0.50 (equal to mixed)\* | — | ~0.8–0.9 | an all-wrong group now has signal whenever some answers box and some don't | **0.70** ❌ (0.73 over the run) |
+| Runtime | 29 min | ~40 min (T4) | ~30 min | same work per step | **29 min** ✅ |
+
+\*Corrected 2026-10-07: written as "~0.6" before the run because I read the truncation column as the mixed column. The prediction is unchanged.
 
 **Decision rule.** Format ≥ ~65%: the bonus explains most of the gap, and the replication is done. Format below ~55%: the other differences matter more; next, match two optimizer steps per training step (`--num-minibatches 2`).
 
+## 2026-10-07 · Format-bonus run: results
+
+**Run.** Planned as `rayyy_repo_fmt02_s0` but run as **`rayyy_repro_s0`**, results in `results/train/rayyy_repro_s0/`. Not to be confused with `rayyy_repo_s0`, the run without the bonus. Code at `18f3adc`, no uncommitted changes, 29 min. Step 1 matches the no-bonus run exactly (accuracy 12.5%, format 31.25%, mean length 236.06), so the comparison is controlled: only the reward differs. Predictions vs results are filled in above.
+
+| Final evaluation (all 1,319 test questions, 256 tokens) | No bonus | Bonus 0.2 | Change |
+| --- | --- | --- | --- |
+| Greedy accuracy | 28.3% | 32.4% | +4.1 |
+| Greedy format rate | 43.2% | 56.5% | +13.3 |
+| Greedy truncation | 59.1% | 45.2% | −13.9 |
+| Sampled pass@1 | 24.8% | 29.5% | +4.7 |
+| pass@8 | 51.3% | 58.8% | +7.5 |
+| Correct among boxed (greedy) | 65% | 57% | −8 |
+
+**Verdict: the bonus explains about half of the format gap.** On 100 questions it took format from 47% to 61%, against rayyy's 76%. That falls in the decision rule's middle zone (55–65%). The remaining 15 points are about 2 standard errors of 100-question noise, plus the two differences left unmatched (2 optimizer steps per training step, the leaked sampler). **The pipeline check is complete:** the baseline matches, accuracy matches, and the main code difference moves format in the predicted direction.
+
+**Lessons.**
+1. **At a tight budget, the format bonus raised accuracy too** (+4 greedy, +7.5 pass@8). Finishing within 256 tokens is required for a correct answer, and the bonus gives that signal in groups the 0/1 reward ignores. One seed, so treat +4 as suggestive.
+2. **It cost some accuracy among boxed answers, less than in rayyy's run:** 65% → 57% here, against their 62% → 42%. Some of the new boxes are wrong answers.
+3. **The bonus gave a gradient to about a fifth more groups** (`groups/nonzero_variance` 0.73 vs mixed 0.51 over the run), fewer than predicted. In many all-wrong groups every answer is truncated, so none is boxed and the bonus is 0 for all of them.
+4. **The policy moved further:** final KL 0.014 against 0.008, consistent with more groups contributing gradient.
+5. **Format was still rising at step 100** (greedy 47% → 54% → 61% over the last three evaluations), so the 100-step budget also limits the final number.
+
+**For our own runs:** keep `format_weight = 0`. At 512 tokens, `vanilla_s0` reached 96.7% format without a bonus, and a format reward would confound the DAPO ablations, especially Overlong Reward Shaping, which also targets length.
+
 ## Next
 
-Run `rayyy_repo_fmt02_s0` and fill in its Result column; then step 4 (run vanilla GRPO longer, at 512 tokens, until it fails).
+Step 4: run vanilla GRPO longer, at 512 tokens, until it fails.
