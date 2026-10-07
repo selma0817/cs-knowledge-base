@@ -118,9 +118,9 @@ README smoke command (2 questions × 4 samples, 2 updates, micro-batches of 4, 2
 
 **Why.** Our numbers differ a lot from rayyy's (base 21% / format 34%; GRPO 32%). The hypothesis is that their 256-token budget (training and evaluation) truncates most answers (this model's greedy median is 296 tokens). If our pipeline reproduces their numbers under their settings, our pipeline is consistent and the difference is the setup, not a bug.
 
-**Setup (matching their config.py).** `--preset vanilla --run-name rayyy_repro_s0 --max-new-tokens 256 --questions-per-step 2 --samples-per-question 8 --num-minibatches 1 --micro-batch-size 8 --lora-r 32 --lora-alpha 32 --lora-dropout 0.05 --eval-questions 100 --eval-samples 4`: 16 completions per step, one update per rollout, learning rate 1e-5, β 0, 100 steps. Differences that remain: system prompt wording; their 100 evaluation questions vs our random 100 from the test set; their near-greedy T = 0.01 vs our greedy; their answer checker; T4 fp16/fp32 vs our bf16.
+**Setup (matching their config.py).** `--preset vanilla --run-name rayyy_repo_s0 --max-new-tokens 256 --questions-per-step 2 --samples-per-question 8 --num-minibatches 1 --micro-batch-size 8 --lora-r 32 --lora-alpha 32 --lora-dropout 0.05 --eval-questions 100 --eval-samples 4`: 16 completions per step, one update per rollout, learning rate 1e-5, β 0, 100 steps. Differences that remain: system prompt wording; their 100 evaluation questions vs our random 100 from the test set; their near-greedy T = 0.01 vs our greedy; their answer checker; T4 fp16/fp32 vs our bf16.
 
-All predictions are for `rayyy_repro_s0` (none come from `vanilla_s0`, which trained at 512 tokens). Table reorganized after writing to separate the two models; the predicted values are unchanged.
+All predictions are for `rayyy_repo_s0` (none come from `vanilla_s0`, which trained at 512 tokens). Table reorganized after writing to separate the two models; the predicted values are unchanged.
 
 **A. The untrained model under a 256-token budget** (step 0 of the replication run). Checkable two ways: the replication run's step-0 evaluation (100 questions), and a 256-token cut applied to the existing baseline completions (all 1,319 questions, no GPU needed).
 
@@ -129,21 +129,64 @@ All predictions are for `rayyy_repro_s0` (none come from `vanilla_s0`, which tra
 | Greedy accuracy | 21% | ~20–25% | most greedy answers exceed 256 tokens and lose their box | **23.0%** ✅ (256-token cut on all 1,319 baseline completions) |
 | Greedy format rate | 34% | ~30–40% | same | **33.5%** ✅ |
 
-**Part A confirmed (2026-10-06).** Applying a 256-token cut to the baseline completions: **67.3% of greedy answers exceed 256 tokens**; greedy accuracy 23.0% and format 33.5% (rayyy: 21% / 34%, on 100 questions with about ±4 points of noise); sampled pass@1 16.1%, pass@8 39.5%. Our pipeline reproduces their baseline: the gap to our 47.5% is the token budget, not a bug. Under a 256-token budget, two thirds of answers get reward 0 for length alone, so GRPO's strongest signal there is to finish sooner, consistent with their format rate rising 34% → 76% and average length 189.
+**Part A confirmed (2026-10-06).** Applying a 256-token cut to the baseline completions: **67.3% of greedy answers exceed 256 tokens**; greedy accuracy 23.0% and format 33.5% (rayyy: 21% / 34%, on 100 questions with about ±4 points of noise); sampled pass@1 16.1%, pass@8 39.5%. Our pipeline reproduces their baseline: the gap to our 47.5% is the token budget, not a bug. Under a 256-token budget, two thirds of answers get reward 0 for length alone, so GRPO's strongest signal there is to finish sooner, consistent with their format rate rising 34% → 76% and average length 189. *(Correction, 2026-10-07: their 76% / 189 are not like-for-like. Their reward adds +0.2 for any box; see the results entry below.)*
 
 **B. After 100 steps of GRPO trained at 256 tokens with rayyy's settings** (step 100 of the replication run). Only the replication run can check these.
 
 | Metric | rayyy | Predicted | Reasoning | Result |
 | --- | --- | --- | --- | --- |
-| Greedy accuracy | 32% | ~28–36% | GRPO learns to finish within 256 tokens; ±5 points of noise on 100 questions | |
-| Format rate | 76% | ~70–85% | same | |
-| Mean length | 189 | ~180–210 tokens | the 256 budget pushes length down | |
-| Health metric | — | **> 0** (not exactly 0) | LoRA dropout 0.05 changes the forward pass between scoring passes (as predicted in the LoRA session) | |
-| Runtime | ~40 min (T4) | ~30–40 min | 16 completions per step at ≤ 256 tokens | |
-| Clip fraction | — | **> 0, entirely from dropout noise** (added before the run) | with one update per rollout ρ would be exactly 1 and nothing could be clipped; `logp_old` is scored with dropout off, `logp_new` with dropout on | |
+| Greedy accuracy | 32% | ~28–36% | GRPO learns to finish within 256 tokens; ±5 points of noise on 100 questions | **33%** ✅ (26% at step 0 on the same 100; full test 28.3%) |
+| Format rate | 76% | ~70–85% | same | **47%** ❌ (full test 43.2%) |
+| Mean length | 189 | ~180–210 tokens | the 256 budget pushes length down | **222** ❌ (last step's training rollouts, which is what rayyy's 189 also is; 237 over the last 10 steps) |
+| Health metric | — | **> 0** (not exactly 0) | LoRA dropout 0.05 changes the forward pass between scoring passes (as predicted in the LoRA session) | **> 0** ✅ on 99 of 100 steps: median 0.35, max 0.84; step 1 exactly 0 |
+| Runtime | ~40 min (T4) | ~30–40 min | 16 completions per step at ≤ 256 tokens | **29 min** ✅ |
+| Clip fraction | — | **> 0, entirely from dropout noise** (added before the run) | with one update per rollout ρ would be exactly 1 and nothing could be clipped; `logp_old` is scored with dropout off, `logp_new` with dropout on | **> 0** ✅ on 60 of 100 steps, mean 0.06% of tokens |
 
 A cheaper check first: applying a 256-token cut to the existing baseline completions (counting answers longer than 256 tokens as wrong and unboxed) should already give roughly 21% / 34% for greedy.
 
+## 2026-10-07 · Replication of rayyy's setup: results
+
+**Run.** The command above, code at `d8d5373`, no uncommitted changes. 100 steps, 1,600 completions, 29 min. Results: `results/train/rayyy_repo_s0/`. Predictions vs results are filled in above.
+
+| Final evaluation (all 1,319 test questions, 256-token budget) | Untrained (256-token cut) | Step 100 | Change |
+| --- | --- | --- | --- |
+| Greedy accuracy | 23.0% | 28.3% | +5.3 |
+| Greedy format rate | 33.5% | 43.2% | +9.7 |
+| Greedy truncation | 67.3% | 59.1% | −8.2 |
+| Sampled pass@1 | 16.1% | 24.8% | +8.7 |
+| pass@8 | 39.5% | 51.3% | +11.8 |
+
+**Verdict: accuracy replicates (33% vs 32%), format rate (47% vs 76%) and length (222 vs 189) do not.** It's not a bug in our code. Rereading rayyy's code found three differences my first audit missed:
+
+1. **Their reward includes a format bonus.** `score_answer` returns correctness + 0.2 for any well-formed `\boxed{}` (`format_weight = 0.2`, on in every preset). Their reward curve confirms it: values like 0.0125 = 0.2 / 16 (one boxed wrong answer out of 16) and 1.2. Under a 0/1 reward a boxed wrong answer and a truncated one both score 0, so nothing directly says "finish and box". Under theirs, boxing beats truncation, which pushes format up and length down. Their "GRPO" row is GRPO plus format shaping.
+2. **Two optimizer steps per training step.** Their loop calls `optimizer.step()` once per question group (2 groups of 8), so they took 200 Adam steps to our 100. Adam moves each weight by about the learning rate per step whatever the gradient's size, so their adapter moved about twice as far. Each group's `logp_old` is recomputed right before its own step, so ρ is still 1 apart from dropout.
+3. **Qwen's sampling defaults leak into their generation.** They pass `temperature=1.0, top_k=50` but not `top_p` or `repetition_penalty`, so the model's `generation_config` (top-p 0.8, repetition penalty 1.1) still applies: the trap from [[Decoding and Sampling Parameters]]. Their samples are shorter and loop less, so they produce more boxed answers to learn from. It's also slightly off-policy: samples come from the filtered distribution, log-probs from the unfiltered one. Their evaluation has the same leak, but at baseline it didn't matter (34% vs our 33.5%).
+
+Also, **their "average length 189" is the last training step's rollout mean** over 16 samples under that filtered sampler, not an evaluation number. Their reported clip fraction (0.0) and final reward come from that same last step.
+
+**Lessons.**
+1. **Read the code that computes the reward before comparing numbers.** The same algorithm name hid a different reward. The config table I audited first didn't show it.
+2. **A format bonus can buy format with wrong answers.** Accuracy among boxed answers (accuracy ÷ format rate): untrained 69% (full test), ours after training 70% (33 / 47), rayyy 42% (32 / 76, down from 62% at their baseline). Their extra boxes were mostly wrong answers, consistent with the bonus paying for boxing a guess: a mild form of [[Reward Hacking]].
+3. **The policy barely moved.** Entropy 0.28 → 0.25, KL at most 0.008, training-sample length flat around 235. 100 updates × 16 completions is little training; `vanilla_s0` had 400 updates × 256 completions and its entropy fell 0.34 → 0.08.
+4. **Dropout moves ρ a lot but rarely enough to clip.** The health metric (each step's largest |log ρ|) has a median of 0.35 and a maximum of 0.84, so dropout alone changed one token's probability by up to e^0.84 ≈ 2.3×. Yet only 0.06% of tokens were clipped.
+
+## 2026-10-07 · Format-bonus run: plan and predictions (written before the run)
+
+**Why.** To test whether the +0.2 format bonus explains the format and length gap. Code: `format_weight` option added at `18f3adc` (default 0, so earlier runs are unchanged); the bonus counts any complete box, and accuracy and the group shares stay correctness-based. New metric `groups/nonzero_variance`: the share of groups whose rewards differ, i.e. that produce a gradient.
+
+**Setup.** The `rayyy_repo_s0` command plus `--format-weight 0.2`, run name `rayyy_repo_fmt02_s0`. Same seed, so the first rollout draws the same questions and, up to GPU nondeterminism, the same samples; only the reward differs. The other two differences (2 optimizer steps per training step, the leaked sampler) stay unmatched on purpose: one change at a time.
+
+| Metric | `rayyy_repo_s0` (no bonus) | rayyy | Predicted | Reasoning | Result |
+| --- | --- | --- | --- | --- | --- |
+| Greedy format rate (100 questions, step 100) | 47% | 76% | ~60–80% | all-wrong groups with mixed boxing now give a gradient toward finishing and boxing | |
+| Greedy accuracy | 33% | 32% | ~28–38% | the bonus doesn't reward correctness; finishing in time rescues a few correct answers | |
+| Accuracy among boxed answers | 70% | 42% | ~45–60% | most of the extra boxes are wrong answers | |
+| Training-sample length (last 10 steps) | 237 | 189 (last step) | ~200–225 | a box requires stopping before 256 tokens | |
+| `groups/nonzero_variance` (steps 1–10) | ~0.6 (equal to mixed) | — | ~0.8–0.9 | an all-wrong group now has signal whenever some answers box and some don't | |
+| Runtime | 29 min | ~40 min (T4) | ~30 min | same work per step | |
+
+**Decision rule.** Format ≥ ~65%: the bonus explains most of the gap, and the replication is done. Format below ~55%: the other differences matter more; next, match two optimizer steps per training step (`--num-minibatches 2`).
+
 ## Next
 
-Run the 256-token check on the baseline completions, then `rayyy_repro_s0`; fill in its Result column; then step 4 (run vanilla GRPO longer until it fails).
+Run `rayyy_repo_fmt02_s0` and fill in its Result column; then step 4 (run vanilla GRPO longer, at 512 tokens, until it fails).

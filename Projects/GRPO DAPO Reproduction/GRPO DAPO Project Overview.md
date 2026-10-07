@@ -22,8 +22,8 @@ aliases:
 | --- | --- | --- |
 | 1 | Rule-based reward (`reward.py`, 87 tests) | ✅ 2026-10-01 |
 | 2 | Baseline evaluation on GSM8K test | ✅ 2026-10-02 |
-| 3 | GRPO core and first training run: `Policy` (LoRA, reference via disabled adapter), log-probs, advantage, loss, training loop, held-out evaluation every N steps | next |
-| 4 | Diagnostics; run vanilla GRPO until it fails | |
+| 3 | GRPO core and first training run: `Policy` (LoRA, reference via disabled adapter), log-probs, advantage, loss, training loop, held-out evaluation every N steps | ✅ 2026-10-06 (`vanilla_s0`; replication of rayyy's setup 2026-10-07) |
+| 4 | Diagnostics; run vanilla GRPO until it fails | next |
 | 5 | Difficulty-graded data: per-question solve rates on the train split; MATH support (dataset-specific gold extraction; `is_equivalent` = string → exact numeric → `math-verify`) | |
 | 6 | DAPO switches: Clip-Higher, Dynamic Sampling, Token-level Loss, Overlong Reward Shaping | |
 | 7 | Ablations across seeds | |
@@ -43,7 +43,12 @@ Step 5 comes after GRPO works on plain GSM8K, so a failing first run has one cau
 
 Read for ideas only; my code is my own. What auditing it found:
 
-- **Config shared by every ablation preset:** LoRA r = 32, alpha = 32, dropout 0.05 on all seven projection layers (`q, k, v, o, gate, up, down`); no 8-bit; learning rate 1e-5; group size 8 with **2 questions per step** (16 completions); 100 steps; β = 0 (no KL); `ppo_epochs = 1`. The reference model is a **separately loaded** base model, a second copy of the weights.
+- **Config shared by every ablation preset:** LoRA r = 32, alpha = 32, dropout 0.05 on all seven projection layers (`q, k, v, o, gate, up, down`); no 8-bit; learning rate 1e-5 (Adam); group size 8 with **2 questions per step** (16 completions); 100 steps; β = 0 (no KL); `ppo_epochs = 1`. The reference model is a **separately loaded** base model, a second copy of the weights.
+- **Found when replicating (2026-10-07), missed in the first audit:**
+  - **The reward adds +0.2 for any `\boxed{}`** (`format_weight = 0.2`), even when the answer is wrong. Their "GRPO" is GRPO plus format shaping, which likely explains most of their format rate (76%) and shorter outputs.
+  - **One optimizer step per question group**, so 2 steps per training step (200 in total).
+  - **Qwen's `generation_config` leaks into sampling:** top-p 0.8 and repetition penalty 1.1 stay on, in training and in evaluation.
+  - **The reported average length, clip fraction and final reward are the last training step's values,** not evaluation numbers.
 - **One update per rollout means Clip-Higher has nothing to act on** (ρ = 1). Their reported +8 points for Clip-Higher can't come from the clipping mechanism; with one seed and 100 evaluation questions, noise is the likely explanation. LoRA dropout 0.05 may also make ρ noisy, since dropout changes the forward pass between scoring and training.
 - **MATH gold answers are broken:** `_extract_gt` only looks for `####`, so for MATH it returns the whole solution text as the "gold answer".
 - **Their MATH dataset is gone:** `hendrycks/competition_math` was disabled by a DMCA takedown.
