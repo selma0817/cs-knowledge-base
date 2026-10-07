@@ -22,7 +22,7 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
 | PPO (classic RLHF) | reward model | critic + GAE | clip + KL penalty in the reward | 4: policy, reference, reward, critic |
 | DPO | none (learns directly from preference pairs) | none | classification-style loss on pairs | 2: policy, reference |
 | [[GRPO]] | any (DeepSeek-R1: rule-based) | group mean / std | clip + KL term in the loss | 2: policy, reference |
-| DAPO | rule-based | group-relative | Clip-Higher, token-level loss, no KL | 1: policy |
+| [[DAPO]] | rule-based (±1), optional length penalty | group-relative; all-correct / all-wrong groups filtered out | Clip-Higher, token-level loss, no KL | 1: policy |
 
 ## Learning map
 
@@ -66,8 +66,12 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
 8. [[RL Training Metrics]]
    - Entropy, KL, response length, fraction of groups with the same reward, clip fraction
 
-9. [[DAPO]]
-   - Clip-Higher, Dynamic Sampling, Token-level Loss, Overlong Reward Shaping, each tied to a GRPO failure
+9. [[DAPO]] ✅
+   - Clip-Higher (the upper clip mainly caps rare tokens → entropy collapse; why only ε_high)
+   - Dynamic Sampling (refill zero-variance groups; costs generation, compare at equal compute)
+   - Token-level Loss (long answers, good and bad, weigh more; the denominator under gradient accumulation)
+   - Overlong Reward Shaping (filtering vs soft length penalty; shaping creates gradient in all-wrong groups)
+   - No KL, ±1 reward; ablation designs: add one, cumulative, leave one out
 
 10. [[RLHF with PPO]], [[Reward Models]], [[DPO]], [[Supervised Fine-Tuning]]
     - The classic pipeline, for interview completeness
