@@ -213,6 +213,119 @@ Also, **their "average length 189" is the last training step's rollout mean** ov
 
 **For our own runs:** keep `format_weight = 0`. At 512 tokens, `vanilla_s0` reached 96.7% format without a bonus, and a format reward would confound the DAPO ablations, especially Overlong Reward Shaping, which also targets length.
 
+## 2026-10-07 · Ablations at 256 tokens, round 1: plan and predictions (written before the runs)
+
+**Decisions.**
+- **256 tokens from now on**, so runs are faster and comparable with rayyy's table. Caveat: at 256, 67% of the untrained model's answers are truncated, so the main thing every run learns is to finish in time. Techniques that act on length (Token-level Loss, Overlong Reward Shaping) may look strong partly for that reason.
+- **Our batch shape, not rayyy's:** 32 questions × 8 samples, 4 updates per rollout, micro-batch 8 (rayyy-style runs used micro-batch 8 at 256 tokens with a 9 GB peak). With 1 update per rollout Clip-Higher can't act, and the replication policy barely moved.
+- **Seed 0 for every configuration first,** then seeds 1–2 for the ones that differ from vanilla.
+- **Design: add one technique to vanilla per run, plus one run with all four** (rayyy's design). The DAPO paper instead added them cumulatively; leave-one-out (DAPO minus one) is the follow-up if the all-four run behaves unexpectedly (rayyy's collapsed to 0%).
+
+  | Run | Clip-Higher | Dynamic Sampling | Token-level | Overlong | Round |
+  | --- | --- | --- | --- | --- | --- |
+  | vanilla | | | | | 1 |
+  | clip_higher | ✓ | | | | 1 |
+  | token_level | | | ✓ | | 1 |
+  | dynamic | | ✓ | | | 2 (needs code) |
+  | overlong | | | | ✓ | 2 (needs code) |
+  | dapo | ✓ | ✓ | ✓ | ✓ | 2 (needs code) |
+
+- **Run what exists now** (vanilla, Clip-Higher, Token-level) while Dynamic Sampling and Overlong Reward Shaping are learned and specified.
+- **Reward: correctness only, no format bonus, in every run** (`format_weight = 0`). This is DAPO's own reward: their ±1 gives the same advantages as our 0/1 under group normalization. A format bonus would overlap with Overlong Reward Shaping, since both push the model to finish. Absolute numbers won't match rayyy's table (they used +0.2 in every run), so each technique is compared against our own vanilla.
+- **LoRA r 16 / α 32 / dropout 0, β = 0, learning rate 1e-5, 100 steps,** evaluation on 200 questions every 10 steps plus the full test set at the end.
+
+**Command (Linux):** `for p in vanilla clip_higher token_level; do uv run python scripts/train.py --preset $p --run-name ${p}_256_s0 --max-new-tokens 256 --micro-batch-size 8 || break; done`. Explicit run names keep them short; `load_config`'s default would be `{preset}_s0_{timestamp}`.
+
+**Predictions.** The untrained model at 256 tokens, full test: greedy 23.0%, format 33.5%, truncation 67.3%, pass@1 16.1%, pass@8 39.5%.
+
+| Run | Metric | Predicted | Reasoning | Result |
+| --- | --- | --- | --- | --- |
+| `vanilla_256_s0` | Greedy accuracy (full test) | ~35–45% | 16× the replication's data; 256 tokens caps it below `vanilla_s0`'s 51.6% | **49.7%** ❌ far above: almost `vanilla_s0`'s 51.6% at half the budget |
+| | Greedy format rate | ~75–92% | finishing in time is the main signal | **89.5%** ✅ |
+| | Greedy truncation | < 20% | same | **11.4%** ✅ |
+| | Training-sample length (last 10 steps) | ~150–200 | same | **169** ✅ |
+| | Health metric | exactly 0 | dropout 0 | **exactly 0** ✅ (every step of all six runs) |
+| `clip_higher_256_s0` | Greedy accuracy and pass@1 vs vanilla | within ±2 points | `vanilla_s0` clipped ~0.1% of tokens; Clip-Higher only changes those | **+1.9 ± 1.3** greedy (paired), +0.3 pass@1 ✅ |
+| | `clip/high` vs vanilla | lower | the upper bound moves from 1.2 to 1.28 | **0.04% vs 0.14%** (steps 91–100) ✅ |
+| | Entropy at step 100 vs vanilla | equal or slightly higher | Clip-Higher's stated purpose, but too little clipping to matter here | **0.146 vs 0.096 (+52%)** ❌ much higher |
+| `token_level_256_s0` | Training-sample length, steps 1–30 | falls faster than vanilla | token-level weights every token equally, so long (mostly truncated, wrong) answers get more total push-down than under the sample mean | **200 vs 213** at steps 21–30 ✅; equal (169) by the end |
+| | Greedy accuracy vs vanilla | within ±3 points | | **+0.0 ± 1.2** ✅ |
+| all | Runtime | ~60–80 min each | ~30 s per step plus evaluation | **71–75 min** ✅ |
+
+## 2026-10-08 · Ablations at 256 tokens, round 2: plan and predictions (written before the runs)
+
+**Code.** Step 6 at `be949c1` (spec `docs/step6-spec.md`): Dynamic Sampling (accuracy filter, rounds of 32 questions, at most 4 rounds, top-ups as zero-advantage padding) and the soft overlong penalty (window 64 tokens, factor 0.5, so our reward is exactly (R_DAPO + 1) / 2). With every new switch off, one rollout and update are bit-identical to the round-1 code (checked on a toy model), so round 1 needs no rerun. Overlong filtering is built in the rollout but refused by `train()` until `train_step` uses `loss_mask`. No preset uses it.
+
+**Command (Linux).** Round 1 hadn't started when step 6 was merged, so both rounds run in one loop at `be949c1`: `for p in vanilla clip_higher token_level dynamic_sampling overlong dapo; do uv run python scripts/train.py --preset $p --run-name ${p}_256_s0 --max-new-tokens 256 --micro-batch-size 8 || break; done`. The round-1 presets run on the step 6 code with its switches off, which the identity check showed gives the same results as the old code.
+
+**Starting point.** The untrained model at 256 tokens samples a correct answer for only 39.5% of questions within 8 tries (pass@8), so about 60% of groups start all wrong.
+
+| Run | Metric | Predicted | Reasoning | Result |
+| --- | --- | --- | --- | --- |
+| `dynamic_sampling_256_s0` | `dynamic/keep_rate`, steps 1–10 | ~0.30–0.45 | ~60% of groups all wrong at the start | **0.52** ❌ the model improves fast: pass@1 0.17 → 0.26 within 10 steps |
+| | `dynamic/rounds` | mostly 3 early, 2 later | 32 informative groups at a 30–45% keep rate need about 3 rounds of 32 | **2 rounds on 78 steps, 3 on 22** ❌ |
+| | Steps with top-ups | < 10% | needs a keep rate under 25% across all 4 rounds | **none** ✅ |
+| | Greedy accuracy (full test) vs `vanilla_256_s0`, at step 100 | +2 to +6 points | every update uses 32 informative groups instead of about 12–20 | **+1.4 ± 1.2** ❌ just below |
+| | Same comparison at equal generated samples | within ±3 points | the gain comes from more data per step, not free signal | ✅ it reaches 25,600 samples at step 48, where its 200-question evaluation is at or below vanilla's final |
+| | Runtime | ~100–140 min | 2–3× the generation per step | **98 min** (just under; 2.2× the samples but 1.5× the step time) |
+| `overlong_256_s0` | `reward/overlong_penalty_mean`, steps 1–10 → 91–100 | about −0.7 → above −0.2 | two thirds of samples start truncated (−1 each) | **−0.72 → −0.035** ✅ |
+| | Training-sample length, last 10 steps, vs vanilla | 15–40 tokens shorter | the penalty starts at 192 tokens | **41 shorter** (128 vs 169) ❌ just outside |
+| | Greedy accuracy vs vanilla | within ±3 points | if lower, check whether correct answers got shorter too (the penalty cutting reasoning) | **−1.7 ± 1.3** ✅, but correct answers did get 25–30% shorter (see the results entry) |
+| | Runtime | ~60–80 min | same work as vanilla | **71 min** ✅ |
+| `dapo_256_s0` | Collapse (rayyy's DAPO: 0%) | **no**: greedy accuracy ≥ vanilla − 3 | their collapse came with a length penalty twice DAPO's relative strength starting at token 128, plus a format bonus and 2×8 batches; ours uses DAPO's scale and starts at 192 | **53.4%**, the best run ✅ |
+| | Greedy accuracy vs the best single technique | within ±3 points | gains rarely add up over 100 steps with one seed | **+1.8** over Clip-Higher ✅ |
+| | Runtime | ~100–140 min | Dynamic Sampling dominates the cost | **98 min** (just under) |
+
+**A second set of predictions, from discussion.** (1) Clip-Higher will raise accuracy the most of the four single techniques (the table above instead says within ±2 of vanilla, since only ~0.1% of tokens were clipped in `vanilla_s0`). **Result:** largest point estimate (+1.9 vs +1.4, 0.0, −1.7), but only 1.5 standard errors from zero, so not distinguishable from the others yet. (2) Whether `dapo` collapses: unsure. **Result:** no, it's the best run.
+
+**Comparison caveat.** `policy/entropy` comes from scoring the trained batch only. With Dynamic Sampling that batch has more mixed, harder questions, so the entropy of `dynamic_sampling` and `dapo` isn't directly comparable with the other runs.
+
+## 2026-10-09 · Ablations at 256 tokens, rounds 1 and 2: results (seed 0)
+
+**Runs.** All six at `be949c1`, no uncommitted changes, configs checked; 8.2 h in total. Results in `results/train/{vanilla,clip_higher,token_level,dynamic_sampling,overlong,dapo}_256_s0/`, including `final_eval.json` (per-question records). Predictions vs results are filled in above. Table from `scripts/ablation_table.py`:
+
+| Run | Greedy acc. | Δ vs vanilla (paired) | pass@1 | pass@8 | Greedy format | Greedy trunc. | Mean length | Samples | Runtime |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| vanilla | 49.7% | — | 46.5% | 74.8% | 89.5% | 11.4% | 175 | 25,600 | 75 min |
+| + Clip-Higher | 51.6% | +1.9 ± 1.3 | 46.8% | 75.9% | 90.8% | 9.5% | 173 | 25,600 | 75 min |
+| + Dynamic Sampling | 51.2% | +1.4 ± 1.2 | 47.7% | 74.1% | 86.1% | 14.7% | 186 | 56,832 | 98 min |
+| + Token-level | 49.7% | +0.0 ± 1.2 | 47.8% | 75.1% | 89.8% | 10.5% | 174 | 25,600 | 75 min |
+| + Overlong | 48.1% | −1.7 ± 1.3 | 46.5% | 72.7% | 97.9% | 2.0% | 130 | 25,600 | 71 min |
+| DAPO (all four) | **53.4%** | **+3.6 ± 1.2** | 49.3% | 76.5% | 95.8% | 4.3% | 155 | 57,856 | 98 min |
+
+Greedy accuracy by the number of steps in GSM8K's reference solution (a difficulty measure that doesn't depend on any run), Δ vs vanilla with paired standard errors:
+
+| Reference steps | Questions | Vanilla | Overlong | DAPO | Clip-Higher |
+| --- | --- | --- | --- | --- | --- |
+| 1–2 | 326 | 66.3% | +4.6 ± 2.4 | +4.9 ± 2.3 | +4.6 ± 2.4 |
+| 3 | 371 | 56.9% | −5.9 ± 2.7 | +1.6 ± 2.1 | +3.0 ± 2.4 |
+| 4 | 297 | 44.4% | −1.7 ± 2.8 | +4.4 ± 2.7 | −2.4 ± 2.7 |
+| 5 | 175 | 34.3% | +0.0 ± 3.7 | +3.4 ± 3.4 | +5.7 ± 3.8 |
+| 6+ | 150 | 24.7% | −6.7 ± 3.5 | +4.7 ± 3.6 | −2.7 ± 3.5 |
+
+**Verdict (one seed).** Only DAPO's gain is clearly beyond test-set noise (3.0 standard errors). No single technique is distinguishable from vanilla on accuracy, though Clip-Higher clearly changes entropy and Overlong clearly changes length. Seeds 1–2 are needed before any of this is a finding.
+
+**Lessons.**
+1. **Under a tight budget, GRPO teaches concision.** Vanilla at 256 tokens went from 23.0% to 49.7%, almost `vanilla_s0`'s 51.6% at 512. Training-sample length fell 237 → 169 and truncation 63% → 7%.
+2. **Paired standard errors are much tighter (1.2–1.3 vs 1.9).** Runs agree on about 80% of questions, and only disagreements contribute to the error bar. They still only cover which test questions we have, not training randomness.
+3. **Clip-Higher works as a mechanism without an accuracy gain yet.** Entropy at the end is 52% higher (0.146 vs 0.096) and upper clipping 3.5× rarer. A 0.1% clip fraction matters because the clipped tokens are rare tokens at the few uncertain "forking" positions, which is where entropy comes from.
+4. **Dynamic Sampling gains per step, not per sample.** +1.4 at equal steps; at equal generated samples (step 48) no better than vanilla. Its keep rate stayed around 0.5, so it never reached the regime it targets (mostly all-correct groups). Its answers ended longer than vanilla's (182 vs 169), at every difficulty.
+5. **Overlong alone likely cuts reasoning on harder questions.** +4.6 on 1–2-step questions, but −5.9 on 3-step and −6.7 on 6+ (each about 2 standard errors). Correct answers are 25–30% shorter at every difficulty; 19% of wrong answers are under 100 tokens (vanilla 2%). In training, `groups/nonzero_variance` was 0.73 against 0.58 mixed: about 15% of groups taught length alone, mostly all-wrong ones ("be short where you can't solve it").
+6. **Inside DAPO the same penalty doesn't hurt.** DAPO is positive at every difficulty (+4.7 on 6+), and only 5% of its wrong answers are under 100 tokens. Likely reason: the accuracy filter drops all-wrong groups, so length-only signal never trains. The techniques interact, which add-one ablations can't show; rayyy's reward-variance filter would have kept those groups.
+7. **Shaping speeds up early learning.** On the 200-question evaluation at steps 10 and 20: DAPO 0.37 / 0.46 and Overlong 0.30 / 0.45, vs vanilla 0.255 / 0.365. Vanilla catches up by step 30.
+8. **Analysis trap: don't split questions by one run's own outcome.** Bucketing by vanilla's answer length made every other run gain about +15 in vanilla's "truncated" bucket, since those were almost all vanilla failures (Clip-Higher has no length mechanism and still gained). Split by something independent of the runs, such as reference-solution steps.
+
+## 2026-10-09 · Seeds 1–2: plan and predictions (written before the runs)
+
+**Runs.** vanilla, clip_higher, overlong and dapo with seeds 1 and 2 (8 runs, about 10.5 h), same code and settings: `for s in 1 2; do for p in vanilla clip_higher overlong dapo; do uv run python scripts/train.py --preset $p --seed $s --run-name ${p}_256_s$s --max-new-tokens 256 --micro-batch-size 8 || break 2; done; done`. The seed changes question order, sampling and LoRA initialization; the evaluation questions stay the same.
+
+| Claim from seed 0 | Holds if | Result |
+| --- | --- | --- |
+| DAPO beats vanilla | DAPO − vanilla > 0 in both new seeds, mean over 3 seeds ≥ +2 | |
+| Overlong alone hurts harder questions | Overlong − vanilla on 6+-step questions < 0 in both new seeds | |
+| Clip-Higher keeps entropy higher | entropy at steps 91–100 above vanilla's in both new seeds | |
+| Clip-Higher raises accuracy | Clip-Higher − vanilla > 0 in both new seeds (expected: not reliably) | |
+
 ## Next
 
-Step 4: run vanilla GRPO longer, at 512 tokens, until it fails.
+Seeds 1–2 are running on Linux. Then: seed spreads, the claims above, and the README's analysis section. Step 4 (run vanilla longer until it fails) is postponed.
