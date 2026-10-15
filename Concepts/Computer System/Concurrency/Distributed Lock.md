@@ -30,7 +30,13 @@ SET lock_key <unique-token> NX EX <seconds>
 
 The value must be a **unique token** (e.g. UUID + thread id) identifying *this* holder. Why: on release you must delete **only your own** lock. A blind `DEL lock_key` could delete a lock that **another** client acquired after yours expired.
 
-So release is a **check-and-delete**: "if the value is my token, delete it." That is **two logical steps**, and doing them as separate `GET` then `DEL` has a race — the lock could expire and be re-acquired by someone else *between* your GET and DEL, and your DEL would delete their lock. The fix: do it **atomically in a Lua script**.
+So release is a **check-and-delete**: "if the value is my token, delete it." Doing it as two separate commands races:
+```
+GET lock_key          # → returns stored token
+# client compares: token == my_token ?
+DEL lock_key          # delete
+```
+**Between** the GET and the DEL, your lock can expire and client B can acquire it (new token). Your client already decided "it's mine" from the now-stale GET, and the DEL **deletes B's lock**. The fix: do GET-compare-DEL **atomically in a Lua script**.
 
 ```lua
 -- release: delete only if we still hold it
@@ -51,6 +57,10 @@ If the work outlasts the lock's TTL, the lock expires **while you're still worki
 
 - **Watchdog / lease renewal:** a background thread renews (extends) the TTL while the holder is alive. **Redisson** does this automatically (default 30 s lease, renewed every 10 s), and also supports **reentrant** locks.
 - Set a TTL safely longer than the expected work, with renewal as backup.
+
+But the watchdog only renews *while the holder is alive*, so two cases differ:
+- **Holder crashes** → the watchdog thread dies with it → renewals stop → the TTL expires → lock **auto-frees**. (This is why you still need a TTL, not an infinite lock.)
+- **Holder hangs forever** (alive but stuck) → the watchdog keeps renewing → the lock **never frees**. Bound this with a **max lease / renewal cap** (Redisson's `leaseTime`) or an **overall operation timeout** that aborts the work.
 
 ## Multi-node: Redlock and its controversy
 

@@ -32,8 +32,12 @@ aliases:
 
 Requests for keys that aren't in the DB at all (so never cached) hit the DB every time. Often **malicious** (attacker hammers `id=-1`, random UUIDs) or a bug. The cache can't help because there's nothing to cache.
 
-- **Fix 1 — cache the null result** with a short TTL, so repeats of the missing key hit the cache.
-- **Fix 2 — bloom filter** of all valid keys in front; if a key isn't in the filter, reject instantly without touching the DB.
+- **Fix 1 — cache the null result** with a short TTL. When a query misses *both* cache and DB, store a null sentinel so repeats hit the cache:
+  ```
+  SET product:-99999 "<NULL>" EX 60     # short TTL (30–60s)
+  ```
+  The next request for that key hits the sentinel → return "not found", no DB touch. Short TTL because the data might get created later, and to cap memory. **Weakness:** an attacker spraying *many distinct* invalid keys fills Redis with null entries — which is why the bloom filter is stronger for that case.
+- **Fix 2 — bloom filter** built from all **valid** keys (loaded at startup, each new key added on insert). On a request: **not in the filter → definitely invalid → reject** without touching cache/DB; **in the filter → probably valid → proceed**. The error is one-sided: **false positives** let a few invalid keys through, but **never false negatives** (it never rejects a valid key). You track valid keys, not invalid ones.
 - Fix 3 — input validation / rate-limit suspicious patterns.
 
 ### 雪崩 Avalanche — mass expiry or Redis down
@@ -51,6 +55,18 @@ A single popular key that *does* exist expires, and a burst of concurrent reques
 - **Fix 1 — mutex / [[Distributed Lock|distributed lock]]:** only the first request rebuilds the key; others wait or get a stale value.
 - **Fix 2 — logical expiration:** never physically expire; store a logical-expiry field; when logically expired, one request triggers an async rebuild while others return the old value.
 - **Fix 3 — never-expire / pre-warm hot keys** (needs knowing the hot keys ahead of time).
+
+Logical expiration in detail: the value has **no Redis TTL** and carries a `logicalExpireAt` field. On read:
+```
+value = GET key
+if now < value.logicalExpireAt:        # fresh
+    return value
+else:                                   # logically expired
+    if tryLock(mutex):                  # exactly ONE request wins the lock
+        spawn async: rebuild from DB, SET new value + new logicalExpireAt, unlock
+    return value                        # STALE value returned immediately, lock winner or not
+```
+Exactly one request triggers the background rebuild; everyone (including that one) returns the old value right away — no stampede, no blocking. Tradeoff: readers see slightly stale data during the rebuild window.
 
 ## Cache ↔ DB consistency: Cache Aside (旁路缓存)
 
