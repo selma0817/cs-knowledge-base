@@ -155,7 +155,9 @@ Avoid `Hashtable` and `Collections.synchronizedMap` — both take **one coarse l
 if (map.get(k) == null) map.put(k, compute());   // WRONG: check-then-act race
 map.computeIfAbsent(k, key -> compute());          // RIGHT: atomic (lambda runs under the bucket lock)
 ```
-Also `putIfAbsent`, `compute`, `merge`.
+Also `putIfAbsent`, `compute`, `merge`, and atomic conditional **`remove(key, expectedValue)`** (removes only if currently mapped to that value).
+
+**Writes, all cases:** insert into an *empty* bucket = **CAS** (lock-free, single pointer); insert into a *non-empty* bucket = **`synchronized`(head)** then traverse + update/append; **`remove`** = always **`synchronized`(head)** then traverse + unlink (no CAS fast path, since find-then-unlink is multi-step). Concurrent lock-free readers see the node bypassed via the volatile `next`, so they observe a consistent present-or-gone view.
 
 > A plain HashMap corrupts under concurrent writes (lost updates; Java 7's resize could cycle the list into an infinite-loop `get`). ConcurrentHashMap avoids a single global lock: Java 7 striped locks across 16 segments; Java 8 uses CAS on empty buckets and `synchronized` on each bucket's head node (per-bucket granularity), lock-free volatile reads, and cooperative resizing. It bans null keys/values.
 
