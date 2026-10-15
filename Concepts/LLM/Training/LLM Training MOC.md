@@ -61,7 +61,7 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
 7. [[LoRA and QLoRA]] ✅
    - Rank, B·A, why B = 0 and A random; parameter counts for Qwen2.5-0.5B
    - RL choices: all layers, small rank, ~10× learning rate, dropout 0
-   - Where training memory goes (logits!); micro-batching, gradient checkpointing; QLoRA's NF4; connects to [[Quantization]]
+   - Where training memory goes (logits!); micro-batching, [[Gradient Checkpointing|gradient checkpointing]]; QLoRA's NF4; connects to [[Quantization]]
 
 8. [[RL Training Metrics]]
    - Entropy, KL, response length, fraction of groups with the same reward, clip fraction

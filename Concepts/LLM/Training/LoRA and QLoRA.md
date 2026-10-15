@@ -98,7 +98,7 @@ Catch it before any GPU time with a CPU test on a tiny model: copy the base weig
 **Logits are often the largest single activation.** Shape `[batch, tokens, vocab]` with Qwen's vocabulary of 151,936: one micro-batch of 8 × 800 tokens is 972M numbers ≈ 1.9 GB in bf16, 3.9 GB in fp32, i.e. 25–55× the LoRA optimizer state. Keep only the log-prob of the actual token (`logit[token] − logsumexp(logits)`), one micro-batch at a time: `[8, 800]` = 26 KB.
 
 - **Micro-batching (gradient accumulation):** process a mini-batch in pieces, add up gradients, one optimizer step; only one piece's activations are alive at a time.
-- **Gradient checkpointing:** the forward pass keeps only each layer's *input*; the backward pass re-runs each layer's forward pass before differentiating it. Trades about one extra forward pass (~30% more time) for much less activation memory.
+- **Gradient checkpointing:** the forward pass keeps only each layer's *input*; the backward pass re-runs each layer's forward pass before differentiating it. Trades about one extra forward pass (~30% more time) for much less activation memory. See [[Gradient Checkpointing]].
 
 ## Common misconceptions
 
