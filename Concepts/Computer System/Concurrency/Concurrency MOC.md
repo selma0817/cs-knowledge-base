@@ -22,6 +22,7 @@ The execution abstractions themselves — process, thread, coroutine — and how
 - [[Semaphore]] — manages a fixed number of permits and limits concurrent resource use.
 - Atomic operations — make a single supported read-modify-write operation indivisible.
 - [[Compare-and-Swap]] — atomic conditional read-modify-write; the optimistic primitive behind lock-free code and lock fast paths.
+- [[Distributed Lock]] — mutual exclusion across machines (Redis `SET NX EX`, Lua release, watchdog, Redlock); a mutex whose state lives in a shared store.
 - [[Cache Coherence and MESI]] — the hardware foundation (MESI, snooping, cache lines) that makes atomics work across cores.
 - Condition variables — allow goroutines or threads to sleep until shared state may satisfy a condition.
 - [[sync.WaitGroup]] — waits for a collection of goroutines to finish; it does not protect shared data.

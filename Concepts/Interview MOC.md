@@ -63,6 +63,8 @@
 - [[Idempotency]]
 - [[Retry Backoff and Jitter]]
 - [[Eventual Consistency]]
+- [[Redis Caching Patterns]]
+- [[Distributed Lock]]
 
 ## Evaluation and Safety
 
