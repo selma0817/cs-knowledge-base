@@ -123,12 +123,41 @@ Contrast with hashing that *does* need eternal, cross-machine determinism — sh
 
 > Same threat, two philosophies. Java keeps a stable, attackable hash and treeifies the bad bucket (O(log n)). Go/Python randomize the seed so the colliding keys cannot be constructed at all — and never need trees.
 
+## Thread safety and ConcurrentHashMap (Java)
+
+A plain `HashMap` is **not thread-safe** — concurrent writes corrupt it in concrete ways (not just "a race"):
+
+1. **Lost updates:** two threads `put` into the same bucket; both read the bucket head, both link their node, one overwrites the other → an entry silently vanishes.
+2. **Resize corruption:**
+   - **Java 7** transferred the chain with **head-insertion**, which *reversed* it; two threads resizing at once could form a **cycle** in the linked list → a later `get()` spins in an **infinite loop** (100% CPU). A classic outage.
+   - **Java 8** switched to **tail-insertion** (preserves order), killing the infinite loop — but concurrent put/resize can still **lose data**. Still not thread-safe.
+3. **Fail-fast iteration:** structurally modifying a map while iterating throws **`ConcurrentModificationException`** (a `modCount` check) — a guard, not corruption.
+4. **No visibility guarantees:** no `volatile`/happens-before, so one thread may not see another's writes.
+
+**ConcurrentHashMap** makes it safe *without one global lock*, with finer granularity across versions:
+
+| | **Java 7** | **Java 8+** |
+| --- | --- | --- |
+| Structure | N **segments** (default 16), each a mini-HashMap with its own lock | one `Node[]` table, lock per **bucket** |
+| Write lock | lock the whole **segment** (`ReentrantLock`) | **CAS** on an empty bucket; `synchronized` on the bucket's **head node** if non-empty |
+| Concurrency | up to 16 writers (one per segment) | up to one writer **per bucket** (much finer) |
+| Reads | mostly lock-free (volatile) | lock-free via `volatile` nodes/table |
+| Resize | per-segment | **cooperative** — threads help migrate buckets (`ForwardingNode` marks moved ones) |
+
+Also: `size()` uses a striped counter (LongAdder-style `baseCount` + `CounterCell[]`) to avoid contention, and **null keys/values are banned** — in a concurrent `get`, `null` can't disambiguate "maps to null" from "absent" without locking.
+
+Avoid `Hashtable` and `Collections.synchronizedMap` — both take **one coarse lock on every operation**, so they don't scale. (This is the [[Mutex]] vs lock-striping vs [[Compare-and-Swap|CAS]] tradeoff applied to a map.)
+
+> A plain HashMap corrupts under concurrent writes (lost updates; Java 7's resize could cycle the list into an infinite-loop `get`). ConcurrentHashMap avoids a single global lock: Java 7 striped locks across 16 segments; Java 8 uses CAS on empty buckets and `synchronized` on each bucket's head node (per-bucket granularity), lock-free volatile reads, and cooperative resizing. It bans null keys/values.
+
 ## Interview summary
 
-> A hash map maps key → hash code → bucket index (`hash % capacity`) → an O(1) array offset. Collisions are inevitable (pigeonhole) and handled by separate chaining (lists/trees off the array) or open addressing (probing within the array). The table-wide load factor triggers resizing: allocate ~2× buckets and rehash every entry (O(n), amortized O(1)); power-of-2 masking splits each bucket in two; resizing can be stop-the-world (Java/Python) or incremental (Go/Redis). A single overloaded bucket degrades to O(n); Java 8 treeifies chains past length 8 into a red-black tree (O(log n)) to survive hash-flooding DoS. Go and Python instead randomize the hash seed (Go per-map, Python SipHash per-process) so collisions cannot be engineered, and use no trees. Hash determinism is required only per-run, which is what makes randomized seeding safe.
+> A hash map maps key → hash code → bucket index (`hash % capacity`) → an O(1) array offset. Collisions are inevitable (pigeonhole) and handled by separate chaining (Java: lists/trees off the array) or open addressing (probing within the array — Python/Go, *not* Java). The table-wide load factor (0.75) triggers resizing: allocate ~2× buckets and rehash every entry (O(n), amortized O(1)); power-of-2 masking splits each bucket in two; resizing can be stop-the-world (Java/Python) or incremental (Go/Redis). A single overloaded bucket degrades to O(n); Java 8 treeifies chains past length 8 (capacity ≥ 64) into a red-black tree (O(log n)) to survive hash-flooding DoS. A plain HashMap is not thread-safe (lost updates; Java 7 resize could infinite-loop); ConcurrentHashMap fixes this with segment striping (Java 7) or CAS + per-bucket `synchronized` (Java 8), and bans nulls. Go and Python randomize the hash seed so collisions cannot be engineered, and use no trees. Hash determinism is required only per-run, which is what makes randomized seeding safe.
 
 ## Related notes
 
 - [[Red-Black Tree]]
+- [[Mutex]]
+- [[Compare-and-Swap]]
 - [[Cache Coherence and MESI]]
 - [[Concurrency vs Parallelism]]
