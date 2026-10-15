@@ -148,6 +148,15 @@ Also: `size()` uses a striped counter (LongAdder-style `baseCount` + `CounterCel
 
 Avoid `Hashtable` and `Collections.synchronizedMap` — both take **one coarse lock on every operation**, so they don't scale. (This is the [[Mutex]] vs lock-striping vs [[Compare-and-Swap|CAS]] tradeoff applied to a map.)
 
+**Reads are lock-free via `volatile`.** Each `Node` has `final key`/`hash` but **`volatile val`/`next`**, and table slots are read with volatile semantics, so `get()` walks the bucket with no lock and a reader of a key being updated sees a consistent **old-or-new** value (never torn) while the writer serializes only against other writers. See [[Volatile and the Java Memory Model]].
+
+**Per-operation ≠ per-sequence atomicity (a common trap).** Each single CHM op is atomic, but a `get`-then-`put` is a **check-then-act race** — another thread can write the key in between. Use the atomic compound APIs instead:
+```java
+if (map.get(k) == null) map.put(k, compute());   // WRONG: check-then-act race
+map.computeIfAbsent(k, key -> compute());          // RIGHT: atomic (lambda runs under the bucket lock)
+```
+Also `putIfAbsent`, `compute`, `merge`.
+
 > A plain HashMap corrupts under concurrent writes (lost updates; Java 7's resize could cycle the list into an infinite-loop `get`). ConcurrentHashMap avoids a single global lock: Java 7 striped locks across 16 segments; Java 8 uses CAS on empty buckets and `synchronized` on each bucket's head node (per-bucket granularity), lock-free volatile reads, and cooperative resizing. It bans null keys/values.
 
 ## Interview summary
@@ -159,5 +168,6 @@ Avoid `Hashtable` and `Collections.synchronizedMap` — both take **one coarse l
 - [[Red-Black Tree]]
 - [[Mutex]]
 - [[Compare-and-Swap]]
+- [[Volatile and the Java Memory Model]]
 - [[Cache Coherence and MESI]]
 - [[Concurrency vs Parallelism]]

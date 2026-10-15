@@ -96,5 +96,6 @@
 - [[Concurrency vs Parallelism]]
 - [[Compare-and-Swap]]
 - [[Cache Coherence and MESI]]
+- [[Volatile and the Java Memory Model]]
 - [[Value Pointer and Ownership]]
 - [[Python Asyncio]]
