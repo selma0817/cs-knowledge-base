@@ -13,8 +13,6 @@ aliases:
   - k1 k2 k3 estimators
   - reference model
   - π_ref
-  - KL 散度
-  - 为什么 DAPO 去掉 KL
 ---
 The **KL penalty** keeps the policy close to a frozen **reference model** π_ref (the model before RL) by subtracting β · KL(π_θ ‖ π_ref) from the objective. It is the "rubber band back to the start", as opposed to clipping, which limits each step relative to π_old ([[Policy Ratio and Clipping]]). In practice the KL is **estimated from the sampled tokens** with the **k3 estimator**, which is unbiased and never negative.
 

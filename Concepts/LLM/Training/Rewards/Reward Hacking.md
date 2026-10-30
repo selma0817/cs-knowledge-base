@@ -11,8 +11,6 @@ aliases:
   - specification gaming
   - reward overoptimization
   - Goodhart's law
-  - 奖励欺骗
-  - 奖励黑客
 ---
 **Reward hacking** is when the policy raises its reward without doing what the reward was meant to measure. RL is a strong optimizer: thousands of updates search for *any* behavior the reward scores highly, so every gap between "what the reward checks" and "what we want" eventually gets found. This is Goodhart's law: when a measure becomes a target, it stops being a good measure.
 

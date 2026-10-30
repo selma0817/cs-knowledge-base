@@ -7,6 +7,8 @@ tags:
   - worker-pool
   - waitgroup
   - concurrency
+  - context
+  - cancellation
 aliases:
   - go-workerpool
   - worker pool pattern
@@ -440,6 +442,141 @@ producer slows down
 system avoids unbounded memory growth
 ```
 
+## Cancellation with `context`
+
+The example above runs until every job is done. Real code often has to stop early: a request timeout, a client disconnect, a shutdown.
+
+Goal:
+
+```text
+when ctx is cancelled:
+  return promptly
+  leave no goroutine blocked forever
+```
+
+### Rule: every blocking point needs a way out
+
+List every place a goroutine can block, and what unblocks it:
+
+| Goroutine | Can block on | Gets out by |
+| --- | --- | --- |
+| producer | `jobs <- u` | `select` with `<-ctx.Done()` |
+| worker | `range jobs` | producer closes `jobs` (the `defer` runs even after cancellation) |
+| worker | `fetch(ctx, u)` | only if `fetch` honors `ctx` |
+| worker | `results <- r` | `select` with `<-ctx.Done()` |
+| closer | `wg.Wait()` | every worker returns |
+| main | `range results` | closer closes `results` |
+
+Shutdown chain:
+
+```text
+cancel
+→ producer returns, defer close(jobs)
+→ workers leave range jobs (or take the ctx.Done() case), wg.Done()
+→ closer: wg.Wait() returns, close(results)
+→ main: range results ends, return
+```
+
+### Code
+
+```go
+type Result struct {
+    URL string
+    Err error
+}
+
+// fetch must honor ctx, e.g. via http.NewRequestWithContext.
+func fetch(ctx context.Context, url string) Result
+
+func FetchAll(ctx context.Context, urls []string, k int) []Result {
+    if k < 1 {
+        k = 1 // zero workers: nobody receives from jobs, producer parks forever
+    }
+    jobs := make(chan string)
+    results := make(chan Result)
+    var wg sync.WaitGroup
+
+    // Producer: only sender on jobs, so it closes jobs.
+    go func() {
+        defer close(jobs)
+        for _, u := range urls {
+            select {
+            case jobs <- u:
+            case <-ctx.Done():
+                return
+            }
+        }
+    }()
+
+    // Workers.
+    for i := 0; i < k; i++ {
+        wg.Add(1) // before go, not inside the goroutine
+        go func() {
+            defer wg.Done()
+            for u := range jobs {
+                r := fetch(ctx, u)
+                select {
+                case results <- r:
+                case <-ctx.Done():
+                    return
+                }
+            }
+        }()
+    }
+
+    // Closer: its own goroutine, so main is free to receive.
+    go func() {
+        wg.Wait()
+        close(results)
+    }()
+
+    var out []Result
+    for r := range results {
+        out = append(out, r)
+    }
+    return out
+}
+```
+
+### The leak the producer's `select` prevents
+
+Producer without it:
+
+```go
+go func() {
+    defer close(jobs)
+    for _, u := range urls {
+        jobs <- u // no ctx.Done() case
+    }
+}()
+```
+
+```text
+ctx cancelled
+→ every worker exits through its ctx.Done() case
+→ nobody receives from jobs
+→ producer parked on jobs <- u forever
+```
+
+Tested 2026-10-30 with `go test -race`: this version left 1 goroutine behind on every run. The version above left none (normal finish, cancel after 75 ms with 100 URLs, `k = 0`).
+
+Same shape as the timeout leak in [[Go Channel Pitfalls and Internals]]: a sender whose receiver has gone away.
+
+### Trade-off: prompt return vs no leftover goroutines
+
+`FetchAll` waits for every worker before returning, because main ranges until `results` is closed. That guarantees no goroutine outlives the call.
+
+But "returns promptly" then depends on `fetch`:
+
+```text
+fetch honors ctx  → returns as soon as in-flight fetches see the cancel
+fetch ignores ctx → waits for in-flight fetches to finish on their own
+```
+
+Returning without waiting would leave in-flight workers running after `FetchAll` returns. Cancellation in Go is cooperative.
+
+In production code, `golang.org/x/sync/errgroup` with `g.SetLimit(k)` handles the limit and the cancellation. In interviews, write the channel version by hand, then mention errgroup.
+
 ## Common mistakes
 
 ### Mistake 1: not closing jobs
@@ -498,6 +635,34 @@ producer goroutine sends jobs
 main goroutine receives results
 ```
 
+### Mistake 6: a blocking send with no `ctx.Done()` case
+
+Bad:
+
+```go
+jobs <- u
+results <- r
+```
+
+once cancellation exists. If the other side has stopped receiving, the sender parks forever: a goroutine leak. Wrap each send in a `select` with `<-ctx.Done()`.
+
+### Mistake 7: calling `wg.Wait()` in main before receiving results
+
+Bad:
+
+```go
+wg.Wait()
+close(results)
+
+for result := range results {
+    fmt.Println(result)
+}
+```
+
+Workers block on `results <- r` because nobody is receiving yet, so they never call `wg.Done()`, so `wg.Wait()` never returns.
+
+Put `wg.Wait(); close(results)` in its own closer goroutine.
+
 ## When to use a worker pool
 
 Use a worker pool when:
@@ -525,6 +690,8 @@ run many independent API calls
 - [[Goroutines and Channels]]
     
 - [[sync.WaitGroup]]
+    
+- [[Go Channel Pitfalls and Internals]]
     
 - [[Concurrency vs Parallelism]]
     
