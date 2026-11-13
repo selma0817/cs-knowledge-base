@@ -22,6 +22,7 @@
 - [[Retrieval-Augmented Generation]]
 - [[Vector Databases and ANN Search]]
 - [[Hybrid Retrieval]]
+- [[Full-Text Search]]
 - [[Reranking]]
 
 ## Serving and Infrastructure

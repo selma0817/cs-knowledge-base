@@ -67,6 +67,7 @@ The key decision axis: **one DB with transactional consistency vs. a dedicated s
 
 - [[Retrieval-Augmented Generation]]
 - [[Hybrid Retrieval]]
+- [[Full-Text Search]]
 - [[Reranking]]
 - [[Database Indexing]]
 - [[Hash Map]]

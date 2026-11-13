@@ -50,3 +50,4 @@ Hybrid retrieval is the **first stage**; its fused top-k is typically passed to 
 - [[Retrieval-Augmented Generation]]
 - [[Reranking]]
 - [[Vector Databases and ANN Search]]
+- [[Full-Text Search]]
