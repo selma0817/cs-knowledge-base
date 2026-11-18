@@ -9,11 +9,11 @@ aliases:
   - process communication methods
 created: 2026-09-15
 tags:
-  - computer-system/operating-system
+  - topic/operating-systems
+  - topic/concurrency
   - ipc
   - signals
   - semaphore
-  - interview
 summary: The three IPC mechanisms beyond pipes/sockets/shared-memory — signals, message queues, semaphores — plus the complete list of ways processes communicate.
 ---
 

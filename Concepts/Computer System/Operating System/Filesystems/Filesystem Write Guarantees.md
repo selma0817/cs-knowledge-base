@@ -3,13 +3,11 @@ aliases:
   - Atomicity Durability and Consistency in Filesystem
   - Concurrent File Append
 tags:
-  - computer-system
-  - operating-system
+  - topic/operating-systems
+  - topic/concurrency
   - filesystem
-  - concurrency
-  - reliability
   - durability
-  - consistency
+  - atomic-append
 date: 2026-07-19
 summary: How atomicity, durability, consistency, and ordering describe different properties of filesystem writes and concurrent appends.
 ---

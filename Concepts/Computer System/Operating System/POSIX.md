@@ -3,6 +3,11 @@ date: 2026-08-15
 aliases:
   - operating system
   - posix
+tags:
+  - topic/operating-systems
+  - posix
+  - syscall
+  - linux
 ---
 
 

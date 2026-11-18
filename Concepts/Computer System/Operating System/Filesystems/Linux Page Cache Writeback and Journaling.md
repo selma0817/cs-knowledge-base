@@ -3,11 +3,13 @@ aliases:
   - Page Cache and Writeback
   - Linux Journaling
 tags:
-  - computer-system
-  - operating-system
+  - topic/operating-systems
+  - topic/caching
   - linux
   - filesystem
-  - prompt-caching
+  - page-cache
+  - writeback
+  - journaling
   - durability
 created: 2026-07-19
 summary: The distinction between caching file data, flushing dirty pages, and journaling multi-step filesystem metadata updates.

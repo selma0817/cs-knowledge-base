@@ -5,10 +5,11 @@ aliases:
   - File Descriptor Model
 created: 2026-08-01
 tags:
-  - computer-system/operating-system
+  - topic/operating-systems
   - linux
+  - file-descriptor
+  - vfs
   - filesystem
-  - ipc
 summary: A file descriptor is a process-local handle through which Linux exposes regular files, pipes, sockets, devices, and other kernel objects using a partly shared I/O interface.
 ---
 

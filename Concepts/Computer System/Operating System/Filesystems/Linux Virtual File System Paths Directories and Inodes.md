@@ -4,8 +4,7 @@ aliases:
   - Path Resolution and Inodes
   - Directory Entries and Inodes
 tags:
-  - computer-system
-  - operating-system
+  - topic/operating-systems
   - linux
   - filesystem
   - vfs

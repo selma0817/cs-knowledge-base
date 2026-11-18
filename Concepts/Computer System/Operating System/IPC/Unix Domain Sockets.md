@@ -5,8 +5,10 @@ aliases:
   - Local Sockets
 created: 2026-08-01
 tags:
-  - computer-system/operating-system
+  - topic/operating-systems
+  - topic/networking
   - ipc
+  - unix-socket
   - sockets
   - linux
 summary: A Unix-domain socket is a local IPC endpoint; a pathname can name its listener through VFS while live communication remains in kernel socket objects and buffers.

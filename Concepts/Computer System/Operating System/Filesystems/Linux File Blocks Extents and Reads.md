@@ -3,11 +3,12 @@ aliases:
   - File Blocks and Extents
   - Linux File Read Path
 tags:
-  - computer-system
-  - operating-system
+  - topic/operating-systems
   - linux
   - filesystem
-  - storage
+  - blocks
+  - extents
+  - read-ahead
 created: 2026-07-19
 summary: How a file's logical byte sequence maps to noncontiguous storage and is returned to an application in the correct order.
 ---

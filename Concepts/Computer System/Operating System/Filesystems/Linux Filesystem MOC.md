@@ -2,8 +2,8 @@
 aliases:
   - Filesystem Map of Content
 tags:
-  - cost-optimization
-  - operating-system
+  - topic/operating-systems
+  - linux
   - filesystem
   - moc
 created: 2026-07-19

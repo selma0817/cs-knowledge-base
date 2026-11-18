@@ -4,8 +4,9 @@ aliases:
   - IPC Pipes and Sockets
 created: 2026-08-01
 tags:
-  - computer-system/operating-system
+  - topic/operating-systems
   - ipc
+  - pipes
   - sockets
 summary: Pipes, FIFOs, Unix sockets, TCP sockets, and shared memory are different kernel-supported ways for processes to exchange data.
 ---

@@ -4,9 +4,9 @@ aliases:
   - IPC MOC
 created: 2026-08-01
 tags:
-  - moc
-  - computer-system/operating-system
+  - topic/operating-systems
   - ipc
+  - moc
 summary: Map of concepts for local process communication, socket behavior, byte streams, and higher-level protocols.
 ---
 
