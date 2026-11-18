@@ -1,13 +1,11 @@
 ---
 date: 2026-11-10
 tags:
-  - ci-cd
-  - devops
+  - topic/ci-cd
   - github-actions
   - git
   - deployment
   - releases
-  - software-engineering
   - interview-review
   - cmbrater
 aliases:

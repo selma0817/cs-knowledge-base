@@ -1,11 +1,11 @@
 ---
 date: 2026-06-27
 tags:
+  - topic/api-design
   - grpc
-  - api-design
-  - microservice
   - protobuf
-  - networking
+  - http2
+  - microservices
 topic: api-design
 ---
 ## One-sentence meaning

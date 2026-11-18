@@ -5,10 +5,12 @@ aliases:
   - RPC Layering
 created: 2026-08-01
 tags:
-  - software-engineering/api-design
+  - topic/api-design
+  - topic/networking
   - rpc
   - http
   - serialization
+  - mit-6.824
 summary: Transport moves bytes, HTTP structures HTTP exchanges, RPC models remote method calls, serialization turns values into bytes, and application code gives those values domain meaning.
 ---
 

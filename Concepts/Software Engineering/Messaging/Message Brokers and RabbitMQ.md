@@ -9,11 +9,10 @@ aliases:
   - fanout
   - quorum queue
 tags:
-  - messaging
+  - topic/messaging-streaming
   - rabbitmq
   - amqp
-  - distributed-systems
-  - interview
+  - message-queue
 topic: messaging
 ---
 A **message broker** is middleware that sits between producers and consumers so work can be sent **asynchronously** instead of via direct synchronous calls. **RabbitMQ** is a broker that speaks **AMQP** and routes messages through **exchanges** to **queues**.

@@ -12,11 +12,12 @@ aliases:
   - DLQ
   - poison message
 tags:
-  - messaging
-  - reliability
+  - topic/messaging-streaming
+  - topic/resilience
+  - delivery-guarantees
   - idempotency
-  - distributed-systems
-  - interview
+  - exactly-once
+  - dead-letter-queue
 topic: messaging
 ---
 **Delivery guarantees** describe how hard a message broker tries to deliver each message exactly once. The practical truth: **exactly-once *delivery* is impossible; you build at-least-once delivery plus idempotent consumers to get exactly-once *effect*.** These concepts are broker-agnostic (RabbitMQ, Kafka, SQS) — see [[Message Brokers and RabbitMQ]] for the concrete model.

@@ -9,6 +9,12 @@ aliases:
   - write model
   - snapshot
   - event store
+tags:
+  - topic/messaging-streaming
+  - topic/software-design
+  - event-sourcing
+  - cqrs
+  - kafka
 ---
 **Event sourcing** stores state as an **append-only log of immutable events** (the source of truth) instead of a mutable current-state row; current state is **derived** by folding the events. **CQRS** pairs with it by separating the write model (events) from query-optimized read models (projections). Both rest on the same log-as-truth idea as [[Kafka]] and [[Raft Log Replication and AppendEntries]].
 

@@ -4,8 +4,10 @@ aliases:
   - Docker Container
   - Podman Container
 tags:
-  - os-process
-  - devops
+  - topic/containers-cloud
+  - topic/operating-systems
+  - container
+  - docker
 ---
 
 ## What Is a Container?

@@ -13,11 +13,12 @@ aliases:
   - event streaming
   - KRaft
 tags:
-  - messaging
+  - topic/messaging-streaming
+  - topic/partitioning-scaling
+  - topic/replication-consistency
   - kafka
-  - streaming
-  - distributed-systems
-  - interview
+  - consumer-groups
+  - isr
 topic: messaging
 ---
 **Apache Kafka** is a distributed, append-only **commit log** for high-throughput event streaming. It is best understood as the design opposite of [[Message Brokers and RabbitMQ]]: a **dumb broker + smart consumer**, where messages are **retained and replayable** rather than deleted on consumption.

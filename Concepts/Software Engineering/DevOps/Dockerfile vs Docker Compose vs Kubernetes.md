@@ -5,11 +5,11 @@ aliases:
   - Docker Compose
   - Docker Buiild vs Runtime
 tags:
+  - topic/containers-cloud
   - docker
-  - devops
-  - containers
-  - software-engineering
-  - deployment
+  - dockerfile
+  - docker-compose
+  - kubernetes
 ---
 ---
 

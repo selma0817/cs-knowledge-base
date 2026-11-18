@@ -1,11 +1,14 @@
 ---
 date: 2026-10-15
 tags:
+  - topic/caching
+  - topic/resilience
+  - topic/replication-consistency
   - redis
-  - caching
-  - backend
-  - consistency
-  - interview
+  - cache-aside
+  - cache-penetration
+  - cache-breakdown
+  - cache-avalanche
 aliases:
   - redis caching
   - cache penetration

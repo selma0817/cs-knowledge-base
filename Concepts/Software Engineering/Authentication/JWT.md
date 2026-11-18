@@ -3,10 +3,10 @@ date: 2026-06-26
 aliases:
   - JSON Web Token
 tags:
+  - topic/security
+  - jwt
   - authentication
-  - security
-  - web
-  - networking
+  - refresh-token
 ---
 
 A **JWT** is a compact, self-contained, digitally signed token that carries a set of claims (facts about a user or session) and can be verified by any party holding the right key — without consulting a database. It is the dominant mechanism for stateless [[Authentication]] and [[Authorization]] in modern web APIs and [[Microservices]].

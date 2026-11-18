@@ -15,6 +15,11 @@ aliases:
   - checkpointing
   - Kafka Streams
   - Flink
+tags:
+  - topic/messaging-streaming
+  - windowing
+  - watermark
+  - event-time
 ---
 **Stream processing** computes continuously over an **unbounded** stream of events, as they arrive, rather than running a job over a bounded dataset. It is the computation side of the log-as-truth model: [[Event Sourcing and CQRS]] writes the log, stream processing reads it to build aggregates and projections, on top of [[Kafka]].
 
