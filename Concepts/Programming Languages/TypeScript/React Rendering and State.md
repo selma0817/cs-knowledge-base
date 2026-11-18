@@ -1,8 +1,9 @@
 ---
 date: 2026-11-04
 tags:
+  - topic/frontend
+  - topic/typescript
   - react
-  - typescript
   - rendering
   - state
   - hooks

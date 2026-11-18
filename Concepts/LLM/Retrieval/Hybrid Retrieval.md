@@ -9,9 +9,10 @@ aliases:
   - reciprocal rank fusion
   - RRF
 tags:
-  - ai/llm/retrieval
-  - ai/systems
-  - interview
+  - topic/search
+  - topic/rag
+  - bm25
+  - rrf
 ---
 **Hybrid retrieval** combines **dense** (embedding) and **sparse** (keyword) search and fuses their results, capturing semantic similarity *and* exact-term precision — usually beating either alone. It is a standard quality lever in [[Retrieval-Augmented Generation]].
 

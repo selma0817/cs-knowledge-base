@@ -13,6 +13,10 @@ aliases:
   - index invalidation
   - 索引失效
   - InnoDB index
+tags:
+  - topic/storage-indexing
+  - mysql
+  - innodb
 ---
 A **database index** is a [[B+ Tree]] that lets queries find rows without scanning the whole table. In InnoDB the table *is* an index, so understanding clustered vs. secondary indexes, back-to-table lookups, composite ordering, and when indexes silently fail is the core of query performance.
 

@@ -1,10 +1,10 @@
 ---
 date: 2026-06-27
 tags:
-  - go
+  - topic/concurrency
+  - topic/go
   - goroutine
   - channel
-  - concurrency
   - scheduler
 ---
 ## One-sentence meaning

@@ -5,9 +5,10 @@ aliases:
   - Message Framing
 created: 2026-08-01
 tags:
-  - computer-system/networking
+  - topic/networking
   - sockets
   - protocols
+  - framing
 summary: TCP and Unix stream sockets preserve byte order but not the boundaries of individual write calls, so higher-level protocols must frame messages.
 ---
 

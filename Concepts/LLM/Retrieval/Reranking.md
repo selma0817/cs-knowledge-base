@@ -7,9 +7,10 @@ aliases:
   - bi-encoder
   - two-stage retrieval
 tags:
-  - ai/llm/retrieval
-  - ai/systems
-  - interview
+  - topic/search
+  - topic/rag
+  - cross-encoder
+  - bi-encoder
 ---
 **Reranking** re-scores a first-stage retriever's top-k with a more accurate but slower **cross-encoder**, so the few chunks sent to the LLM are the most relevant. It is the precision stage of the retrieval stack in [[Retrieval-Augmented Generation]].
 

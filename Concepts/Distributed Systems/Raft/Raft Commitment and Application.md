@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - topic/concurrency
+  - raft
+  - commit-index
+---
 # Raft Commitment and Application
 
 Parent: [[Raft MOC]]

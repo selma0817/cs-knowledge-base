@@ -1,11 +1,10 @@
 ---
 date: 2026-06-29
 tags:
-  - go
+  - topic/concurrency
+  - topic/go
   - goroutine
   - waitgroup
-  - concurrency
-  - syncronization
 ---
 ## One-sentence meaning
 
