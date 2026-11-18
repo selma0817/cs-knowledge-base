@@ -1,10 +1,9 @@
 ---
 date: 2026-06-27
 tags:
-  - concurrency
-  - parallism
+  - topic/concurrency
+  - parallelism
   - scheduling
-  - backend
 ---
 ## One-sentence meaning
 

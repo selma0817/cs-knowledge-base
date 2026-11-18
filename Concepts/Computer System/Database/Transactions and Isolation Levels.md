@@ -12,6 +12,13 @@ aliases:
   - phantom read
   - WAL
   - write-ahead logging
+tags:
+  - topic/transactions
+  - acid
+  - isolation-levels
+  - wal
+  - mysql
+  - postgres
 ---
 A **transaction** is a unit of work (delimited by `BEGIN` … `COMMIT`/`ROLLBACK`) that the database executes with **ACID** guarantees. Isolation levels define how concurrent transactions may interfere, trading correctness against concurrency.
 

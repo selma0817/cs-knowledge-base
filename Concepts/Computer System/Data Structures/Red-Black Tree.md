@@ -7,6 +7,10 @@ aliases:
   - balanced binary search tree
   - AVL tree
   - rotation
+tags:
+  - topic/data-structures
+  - red-black-tree
+  - balanced-bst
 ---
 A **red-black tree** is a self-balancing binary search tree that guarantees O(log n) search, insert, and delete by keeping its height within a constant factor of log n, no matter what order keys arrive.
 

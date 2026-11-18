@@ -2,6 +2,10 @@
 date: 2026-08-15
 aliases:
   - semaphore
+tags:
+  - topic/concurrency
+  - semaphore
+  - rate-limiting
 ---
 A **semaphore** is a synchronization primitive that manages a fixed number of permits. A task must acquire a permit before entering the limited region and release it afterward.
 

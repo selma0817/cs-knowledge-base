@@ -7,6 +7,11 @@ aliases:
   - Memory engine
   - HEAP engine
   - storage engine
+tags:
+  - topic/storage-indexing
+  - mysql
+  - innodb
+  - myisam
 ---
 A **MySQL storage engine** is the pluggable component that actually stores rows, builds indexes, and handles locking and transactions. The same SQL runs on any engine, but their guarantees differ sharply. **InnoDB** is the default (since MySQL 5.5) and the engine all of [[Transactions and Isolation Levels]] and [[MVCC and Locking]] describes.
 

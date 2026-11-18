@@ -9,6 +9,12 @@ aliases:
   - process thread coroutine
   - green thread
   - M:N scheduling
+tags:
+  - topic/concurrency
+  - topic/operating-systems
+  - process
+  - thread
+  - coroutine
 ---
 **Processes, threads, and coroutines** are three levels of execution abstraction. The key axes that separate them: **who schedules them** (kernel vs. user-space runtime), **what memory they share**, and **how cheap they are** to create and switch.
 

@@ -14,6 +14,13 @@ aliases:
   - record lock
   - VACUUM
   - optimistic locking
+tags:
+  - topic/transactions
+  - topic/concurrency
+  - mvcc
+  - innodb
+  - postgres
+  - lost-update
 ---
 **MVCC (Multi-Version Concurrency Control)** lets readers see a consistent point-in-time snapshot without blocking writers, by keeping multiple versions of each row. Locks handle what MVCC does not: conflicts between concurrent *writers*. This note covers both and how InnoDB and Postgres differ.
 

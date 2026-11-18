@@ -3,6 +3,10 @@ date: 2026-08-15
 aliases:
   - mutex, concurrency
   - data race
+tags:
+  - topic/concurrency
+  - mutex
+  - deadlock
 ---
 A **mutex** (mutual-exclusion lock) allows at most one execution context to hold the lock at a time. Its purpose is to protect a shared-state invariant or a compound operation that must appear indivisible.
 

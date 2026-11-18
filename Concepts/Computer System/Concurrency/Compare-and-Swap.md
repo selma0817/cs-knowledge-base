@@ -6,6 +6,12 @@ aliases:
   - compare-and-swap
   - ABA problem
   - lock-free
+tags:
+  - topic/concurrency
+  - cas
+  - atomics
+  - aba-problem
+  - lock-free
 ---
 **Compare-and-swap (CAS)** is an atomic read-modify-write operation that updates a memory location *only if* it still holds an expected value. It is the primitive from which lock-free algorithms and higher-level locks are built.
 

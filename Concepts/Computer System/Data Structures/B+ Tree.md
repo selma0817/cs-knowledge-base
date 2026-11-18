@@ -7,6 +7,10 @@ aliases:
   - Btree
   - fan-out
   - database index structure
+tags:
+  - topic/data-structures
+  - topic/storage-indexing
+  - b-plus-tree
 ---
 A **B+-tree** is a balanced, high-fan-out search tree in which all data lives in the leaves and leaves are linked in order. It is the structure databases and filesystems use to index **on-disk** data, where the cost that matters is the number of page reads.
 

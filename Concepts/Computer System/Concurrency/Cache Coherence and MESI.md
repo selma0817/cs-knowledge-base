@@ -8,6 +8,12 @@ aliases:
   - snooping
   - false sharing
   - cache line
+tags:
+  - topic/concurrency
+  - cpu-cache
+  - mesi
+  - false-sharing
+  - memory-ordering
 ---
 **Cache coherence** is the hardware guarantee that, although each CPU core caches memory in its own private caches, all cores observe a single consistent value for any given memory location. It is the mechanism that makes atomic operations such as [[Compare-and-Swap]] work across cores.
 

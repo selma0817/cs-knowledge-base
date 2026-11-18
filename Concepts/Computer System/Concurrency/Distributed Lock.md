@@ -9,10 +9,12 @@ aliases:
   - watchdog
   - lua atomicity
 tags:
-  - distributed-systems
-  - concurrency
+  - topic/concurrency
+  - topic/replication-consistency
   - redis
-  - interview
+  - lua
+  - redlock
+  - fencing-token
 ---
 A **distributed lock** gives mutual exclusion **across processes/machines** — a [[Mutex]] whose state lives in a shared store (commonly Redis) instead of one process's memory. The subtleties are atomic acquire/release, lock expiry vs. unfinished work, and why release needs a Lua script.
 

@@ -2,6 +2,9 @@
 date: 2026-08-16
 aliases:
   - concurrency moc
+tags:
+  - topic/concurrency
+  - moc
 ---
 
 Concurrency is the coordination of multiple tasks whose executions overlap. Parallelism is the simultaneous execution of multiple tasks. See [[Concurrency vs Parallelism]].

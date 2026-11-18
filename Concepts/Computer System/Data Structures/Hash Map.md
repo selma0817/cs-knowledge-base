@@ -12,6 +12,13 @@ aliases:
   - rehashing
   - hash flooding
   - treeification
+tags:
+  - topic/data-structures
+  - topic/concurrency
+  - topic/java
+  - hash-table
+  - concurrent-hash-map
+  - hash-flooding
 ---
 A **hash map** stores key–value pairs with average O(1) insert, lookup, and delete by converting each key into an array index. Its real subtleties are collision handling, resizing, and worst-case degradation under adversarial input.
 
