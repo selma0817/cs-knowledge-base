@@ -7,11 +7,10 @@ aliases:
   - CIDR
   - Subnet Mask
 tags:
-  - networking
+  - topic/networking
   - routing
   - subnet
-  - gateway
-  - interview
+  - default-gateway
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

@@ -4,9 +4,11 @@ aliases:
   - Simplex Half-Duplex and Full-Duplex
 created: 2026-08-01
 tags:
-  - computer-system/networking
-  - ipc
+  - topic/networking
+  - topic/operating-systems
+  - duplex
   - sockets
+  - ipc
 summary: Duplex describes which directions data may flow through a communication channel and whether both directions may be active at the same time.
 ---
 

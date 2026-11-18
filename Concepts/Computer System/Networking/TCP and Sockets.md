@@ -7,11 +7,10 @@ aliases:
   - TCP Byte Stream
   - 4-Tuple
 tags:
-  - networking
+  - topic/networking
   - tcp
   - sockets
   - transport-layer
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

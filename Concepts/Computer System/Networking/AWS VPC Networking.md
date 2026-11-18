@@ -8,12 +8,11 @@ aliases:
   - NAT Gateway
   - Internet Gateway
 tags:
-  - networking
+  - topic/containers-cloud
+  - topic/networking
   - aws
   - vpc
-  - cloud
-  - devops
-  - interview
+  - security-group
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

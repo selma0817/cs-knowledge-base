@@ -5,11 +5,10 @@ aliases:
   - MAC Address
   - IP vs MAC
 tags:
-  - networking
+  - topic/networking
   - arp
   - mac-address
   - link-layer
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

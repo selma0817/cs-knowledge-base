@@ -7,11 +7,11 @@ aliases:
   - X.509 Certificate
   - Certificate Chain
 tags:
-  - networking
-  - security
+  - topic/security
+  - topic/networking
   - tls
   - certificates
-  - interview
+  - certificate-authority
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

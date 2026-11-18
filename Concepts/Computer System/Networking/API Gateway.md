@@ -5,11 +5,10 @@ aliases:
   - API Front Door
   - Microservice Gateway
 tags:
-  - networking
+  - topic/api-design
+  - topic/networking
   - api-gateway
   - microservices
-  - system-design
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

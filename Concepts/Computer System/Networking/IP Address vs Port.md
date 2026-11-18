@@ -5,10 +5,9 @@ aliases:
   - IP Address and Port
   - IP Port Pair
 tags:
-  - networking
+  - topic/networking
   - ip
   - port
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

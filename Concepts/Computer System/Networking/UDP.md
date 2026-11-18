@@ -6,11 +6,11 @@ aliases:
   - Datagram
   - QUIC
 tags:
-  - networking
+  - topic/networking
   - udp
-  - transport-layer
   - quic
-  - interview
+  - http3
+  - transport-layer
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

@@ -6,11 +6,11 @@ aliases:
   - HTTP over TLS
   - TLS Termination
 tags:
-  - networking
-  - security
+  - topic/security
+  - topic/networking
   - tls
   - https
-  - interview
+  - tls-handshake
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

@@ -7,11 +7,11 @@ aliases:
   - ClusterIP
   - Service Discovery
 tags:
-  - networking
+  - topic/containers-cloud
+  - topic/networking
   - kubernetes
   - service-discovery
-  - devops
-  - interview
+  - ingress
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

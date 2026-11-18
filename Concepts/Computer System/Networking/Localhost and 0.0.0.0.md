@@ -6,12 +6,11 @@ aliases:
   - 0.0.0.0
   - Bind Address
 tags:
-  - networking
+  - topic/networking
   - localhost
   - ip
   - docker
   - debugging
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

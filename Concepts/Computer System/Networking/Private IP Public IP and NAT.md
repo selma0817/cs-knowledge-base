@@ -7,11 +7,10 @@ aliases:
   - Network Address Translation
   - Port Forwarding
 tags:
-  - networking
+  - topic/networking
   - ip
   - nat
-  - router
-  - interview
+  - port-forwarding
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

@@ -5,10 +5,8 @@ aliases:
   - Internet Networking
   - Networking Knowledge Graph
 tags:
+  - topic/networking
   - moc
-  - networking
-  - computer-system
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: evergreen

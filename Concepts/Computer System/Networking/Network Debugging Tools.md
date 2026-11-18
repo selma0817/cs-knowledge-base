@@ -9,10 +9,12 @@ aliases:
   - ss
   - netstat
 tags:
-  - networking
+  - topic/networking
+  - topic/observability
   - debugging
-  - tools
-  - interview
+  - dig
+  - curl
+  - traceroute
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

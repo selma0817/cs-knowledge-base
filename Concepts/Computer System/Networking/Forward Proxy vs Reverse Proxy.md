@@ -5,10 +5,10 @@ aliases:
   - Reverse Proxy
   - Proxy
 tags:
-  - networking
+  - topic/networking
   - proxy
-  - system-design
-  - interview
+  - reverse-proxy
+  - forward-proxy
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

@@ -5,12 +5,12 @@ aliases:
   - Browser Request Path
   - HTTPS Request Lifecycle
 tags:
-  - networking
+  - topic/networking
+  - topic/system-design
   - dns
   - tcp
   - tls
   - http
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

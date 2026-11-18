@@ -7,10 +7,9 @@ aliases:
   - L4 Load Balancer
   - L7 Load Balancer
 tags:
-  - networking
+  - topic/partitioning-scaling
+  - topic/networking
   - load-balancer
-  - system-design
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

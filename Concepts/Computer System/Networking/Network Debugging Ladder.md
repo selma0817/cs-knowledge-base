@@ -5,14 +5,10 @@ aliases:
   - DNS TCP TLS HTTP Debugging
   - Network Failure Layers
 tags:
-  - networking
+  - topic/networking
+  - topic/observability
   - debugging
   - curl
-  - dns
-  - tcp
-  - tls
-  - http
-  - interview
 created: 2026-07-10
 updated: 2026-07-10
 status: seedling

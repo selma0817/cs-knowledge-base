@@ -8,11 +8,11 @@ aliases:
   - Layering
   - TCP vs RPC
 tags:
-  - networking
+  - topic/networking
+  - sockets
+  - tcp
   - transport-layer
   - application-layer
-  - sockets
-  - interview
 created: 2026-09-15
 updated: 2026-09-15
 status: seedling

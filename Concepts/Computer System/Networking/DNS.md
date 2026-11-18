@@ -7,9 +7,8 @@ aliases:
   - A Record
   - CNAME
 tags:
-  - networking
+  - topic/networking
   - dns
-  - interview
   - debugging
 created: 2026-07-10
 updated: 2026-07-10
