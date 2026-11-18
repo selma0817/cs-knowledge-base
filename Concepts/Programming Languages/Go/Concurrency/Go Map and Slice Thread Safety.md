@@ -1,13 +1,13 @@
 ---
 date: 2026-09-28
 tags:
-  - go
+  - topic/concurrency
+  - topic/go
   - map
   - slice
-  - concurrency
   - data-race
   - mutex
-  - interview
+  - rwmutex
 aliases:
   - map 线程安全
   - slice 线程安全

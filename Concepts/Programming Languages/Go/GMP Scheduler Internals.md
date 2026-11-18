@@ -1,13 +1,15 @@
 ---
 date: 2026-09-15
 tags:
-  - go
-  - goroutine
+  - topic/language-runtimes
+  - topic/concurrency
+  - topic/go
   - scheduler
-  - runtime
+  - gmp
+  - work-stealing
+  - netpoller
   - gomaxprocs
-  - concurrency
-  - interview
+  - preemption
 aliases:
   - GMP
   - GMP model

@@ -1,11 +1,11 @@
 ---
 date: 2026-06-02
 tags:
-  - go
+  - topic/language-runtimes
+  - topic/concurrency
+  - topic/go
   - pointer
-  - value
-  - ownership
-  - concurrency
+  - value-semantics
   - data-race
 ---
 ## One-sentence meaning

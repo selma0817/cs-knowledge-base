@@ -1,13 +1,13 @@
 ---
 date: 2026-06-29
 tags:
-  - go
-  - goroutine
+  - topic/language-runtimes
+  - topic/concurrency
+  - topic/go
   - scheduler
-  - runtime
+  - gmp
   - gomaxprocs
-  - concurrency
-  - parallism
+  - parallelism
 aliases:
   - go scheduler
   - go runtime scheduler

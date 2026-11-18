@@ -1,9 +1,9 @@
 ---
 date: 2026-11-04
 tags:
-  - typescript
+  - topic/language-runtimes
+  - topic/typescript
   - types
-  - runtime
   - validation
   - narrowing
   - type-guard

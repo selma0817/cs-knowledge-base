@@ -1,12 +1,13 @@
 ---
 date: 2026-10-15
 tags:
-  - java
+  - topic/concurrency
+  - topic/language-runtimes
+  - topic/java
   - jmm
-  - concurrency
-  - memory-model
   - volatile
-  - interview
+  - memory-model
+  - memory-barrier
 aliases:
   - volatile
   - java memory model

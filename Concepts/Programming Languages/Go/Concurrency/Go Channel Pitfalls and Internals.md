@@ -1,12 +1,12 @@
 ---
 date: 2026-09-28
 tags:
-  - go
+  - topic/concurrency
+  - topic/go
   - channel
   - goroutine
-  - concurrency
-  - runtime
-  - interview
+  - goroutine-leak
+  - hchan
 aliases:
   - channel pitfalls
   - channel 注意事项

@@ -4,10 +4,14 @@ aliases:
   - MIT 6.824 MapReduce RPC Stack
 created: 2026-08-01
 tags:
-  - programming-languages/go
-  - distributed-systems/mapreduce
+  - topic/api-design
+  - topic/operating-systems
+  - topic/go
   - rpc
-  - ipc
+  - net-rpc
+  - unix-socket
+  - mit-6.824
+  - mapreduce
 summary: The MIT 6.824 MapReduce lab uses Go net/rpc and gob over an HTTP-established Unix-domain socket connection, with separate RPC handlers sharing synchronized master state.
 ---
 

@@ -1,13 +1,10 @@
 ---
 date: 2026-06-27
 tags:
+  - topic/language-runtimes
   - compiler
   - interpreter
   - bytecode
-  - infrastructure
-  - runtime
-  - java
-  - python
 ---
 # Compiler vs Interpreter
 

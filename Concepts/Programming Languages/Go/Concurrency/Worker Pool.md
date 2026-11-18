@@ -1,12 +1,12 @@
 ---
 date: 2026-06-29
 tags:
-  - go
+  - topic/concurrency
+  - topic/go
+  - worker-pool
   - goroutine
   - channel
-  - worker-pool
   - waitgroup
-  - concurrency
   - context
   - cancellation
 aliases:

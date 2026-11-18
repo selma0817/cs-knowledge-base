@@ -1,14 +1,12 @@
 ---
 date: 2026-06-27
 tags:
+  - topic/language-runtimes
   - jvm
-  - python
   - cpython
-  - virtual-machine
-  - byte-code
+  - bytecode
   - jit
-  - compiler
-  - interpreter
+  - virtual-machine
 ---
 ## One-sentence meaning
 
