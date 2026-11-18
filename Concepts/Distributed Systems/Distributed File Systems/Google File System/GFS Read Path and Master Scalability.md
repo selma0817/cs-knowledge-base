@@ -3,12 +3,11 @@ aliases:
   - GFS Reads
   - Why the GFS Master Is Not a Data Bottleneck
 tags:
-  - computer-system
-  - distributed-systems
-  - filesystem
+  - topic/distributed-storage
+  - topic/partitioning-scaling
   - gfs
-  - prompt-caching
-  - scalability
+  - filesystem
+  - hotspot
 summary: How GFS reads bypass the master after metadata lookup and why 64 MB chunks improve scalability while creating hotspot risks.
 date: 2026-07-21
 ---

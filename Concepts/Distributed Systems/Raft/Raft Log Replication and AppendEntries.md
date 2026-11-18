@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - log-replication
+  - append-entries
+---
 # Raft Log Replication and AppendEntries
 
 Parent: [[Raft MOC]]

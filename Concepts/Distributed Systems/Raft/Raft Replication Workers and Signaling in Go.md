@@ -1,3 +1,12 @@
+---
+tags:
+  - topic/consensus
+  - topic/concurrency
+  - topic/go
+  - raft
+  - channel
+  - select
+---
 # Raft Replication Workers and Signaling in Go
 
 Parent: [[Raft MOC]]

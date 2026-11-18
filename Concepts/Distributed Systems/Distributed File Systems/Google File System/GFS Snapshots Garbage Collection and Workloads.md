@@ -4,13 +4,12 @@ aliases:
   - GFS Lazy Deletion
   - GFS Workload Trade-offs
 tags:
-  - computer-system
-  - distributed-systems
-  - filesystem
+  - topic/distributed-storage
   - gfs
+  - filesystem
   - snapshot
-  - garbage-collection
   - copy-on-write
+  - garbage-collection
 date: 2026-07-21
 summary: How GFS implements copy-on-write snapshots and lazy deletion, and how its target workload shapes its trade-offs.
 ---

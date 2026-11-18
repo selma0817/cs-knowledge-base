@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - mit-6.824
+  - leader-election
+---
 
 Parent: [[Raft MOC]]
 

@@ -1,3 +1,9 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - persistence
+---
 # Raft Persistent and Volatile State
 
 Parent: [[Raft MOC]]

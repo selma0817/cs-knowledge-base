@@ -1,3 +1,9 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - leader-election
+---
 
 Parent: [[Raft MOC]]
 

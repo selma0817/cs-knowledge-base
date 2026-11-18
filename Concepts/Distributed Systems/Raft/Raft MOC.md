@@ -1,3 +1,9 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - moc
+---
 # Raft MOC
 
 Raft is a consensus algorithm for maintaining a replicated log across servers that can crash, become partitioned, and exchange delayed or lost messages.

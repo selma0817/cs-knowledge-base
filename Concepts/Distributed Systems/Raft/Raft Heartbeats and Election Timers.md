@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - heartbeat
+  - election-timeout
+---
 
 Parent: [[Raft MOC]]
 

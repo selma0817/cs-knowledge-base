@@ -1,3 +1,9 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - rpc
+---
 
 Parent: [[Raft MOC]]
 

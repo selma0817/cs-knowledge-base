@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - mit-6.824
+  - log-replication
+---
 # MIT 6.824 Raft Lab 2B Implementation Map
 
 Parent: [[Raft MOC]]

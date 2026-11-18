@@ -3,10 +3,9 @@ aliases:
   - GFS Architecture
   - GFS Master Metadata
 tags:
-  - computer-system
-  - distributed-systems
-  - filesystem
+  - topic/distributed-storage
   - gfs
+  - filesystem
   - metadata
 summary: How the GFS master, clients, chunkservers, chunks, operation log, and checkpoints divide responsibility.
 ---

@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - safety
+  - liveness
+---
 # Raft Safety Properties and Interview Review
 
 Parent: [[Raft MOC]]

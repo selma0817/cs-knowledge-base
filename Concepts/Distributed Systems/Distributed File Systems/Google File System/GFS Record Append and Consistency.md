@@ -3,11 +3,12 @@ aliases:
   - GFS Atomic Record Append
   - GFS Consistency Model
 tags:
-  - computer-system
-  - distributed-systems
-  - filesystem
+  - topic/distributed-storage
+  - topic/replication-consistency
+  - topic/resilience
   - gfs
-  - consistency
+  - filesystem
+  - record-append
   - idempotency
 date: 2026-07-21
 summary: GFS record-append behavior, retry duplicates, padding, and the meanings of consistent and defined file regions.

@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - topic/concurrency
+  - raft
+  - mutex
+---
 
 Parent: [[Raft MOC]]
 

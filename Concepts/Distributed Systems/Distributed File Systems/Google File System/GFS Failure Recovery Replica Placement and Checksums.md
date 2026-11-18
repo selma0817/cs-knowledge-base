@@ -4,11 +4,10 @@ aliases:
   - GFS Re-replication
   - GFS Data Integrity
 tags:
-  - computer-system
-  - distributed-systems
-  - filesystem
+  - topic/distributed-storage
+  - topic/replication-consistency
   - gfs
-  - replication
+  - filesystem
   - fault-tolerance
   - checksum
 date: 2026-07-21

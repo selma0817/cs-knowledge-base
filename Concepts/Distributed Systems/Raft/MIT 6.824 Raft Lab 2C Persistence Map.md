@@ -1,3 +1,10 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - mit-6.824
+  - persistence
+---
 # MIT 6.824 Raft Lab 2C Persistence Map
 
 Parent: [[Raft MOC]]

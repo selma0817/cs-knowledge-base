@@ -1,10 +1,8 @@
 ---
 tags:
-  - compiler
-  - operating-system
-  - distributed-systems
-  - filesystem
+  - topic/distributed-storage
   - gfs
+  - filesystem
   - moc
 created: 2026-07-21
 aliases:

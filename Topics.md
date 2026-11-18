@@ -27,7 +27,7 @@ They're used in two places:
 4. **Exempt notes:** `README`, this file, MOC notes and `Interview Prep/` may carry tags, but don't need them.
 5. **A new topic is a decision, never a side effect.** If a note fits nothing below, don't invent a tag. Propose a new entry (name, one-line description, and why the existing tags don't fit), get approval, add it here first, then tag the note.
 6. **No `misc` or `other`.** If nothing fits, that's the signal to decide on a new topic.
-7. **Renaming or splitting a topic:** update this list, retag the notes, and rename the topic on existing cards in the interview-review bank (`bank:retopic`, planned). Cards are snapshots, so they don't follow note edits on their own.
+7. **Renaming or splitting a topic:** update this list, retag the notes, then run `npm run bank:retopic` in interview-review. It re-copies every card's topics from the notes' current tags. Cards are snapshots, so they don't follow note edits on their own.
 
 ### Free-form tags
 

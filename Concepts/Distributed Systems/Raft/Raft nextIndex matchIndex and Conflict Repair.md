@@ -1,3 +1,9 @@
+---
+tags:
+  - topic/consensus
+  - raft
+  - log-replication
+---
 # Raft nextIndex matchIndex and Conflict Repair
 
 Parent: [[Raft MOC]]

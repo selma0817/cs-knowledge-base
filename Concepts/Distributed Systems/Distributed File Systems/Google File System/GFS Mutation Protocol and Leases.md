@@ -3,12 +3,11 @@ aliases:
   - GFS Write Protocol
   - GFS Primary Lease
 tags:
-  - computer-system
-  - distributed-systems
-  - filesystem
+  - topic/distributed-storage
+  - topic/replication-consistency
   - gfs
-  - replication
-  - consistency
+  - filesystem
+  - lease
 summary: How GFS uses a leased primary to order mutations while pipelining data independently to every replica.
 date: 2026-07-21
 ---
