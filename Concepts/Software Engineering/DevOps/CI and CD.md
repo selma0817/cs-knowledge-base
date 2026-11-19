@@ -18,6 +18,9 @@ aliases:
   - Reusable workflow
   - Build once
   - GitHub Flow
+  - Deploy on push
+  - Repository ruleset
+  - Defense in depth
 ---
 ## One-sentence meaning
 
@@ -25,7 +28,7 @@ CI checks that each commit, combined with the current `main`, builds and passes 
 
 ## Why I care
 
-- I already run three pipelines: `interview-review/.github/workflows/ci.yml`, `interview-review/.github/workflows/deploy.yml`, and `CMBRater/.github/workflows/ci.yml`. Before these rounds I couldn't say what each one protects against, or what it doesn't.
+- I already run three pipelines: `interview-review/.github/workflows/ci.yaml`, `interview-review/.github/workflows/deploy.yaml` (`.yml` until 2026-11-18), and `CMBRater/.github/workflows/ci.yml`. Before these rounds I couldn't say what each one protects against, or what it doesn't.
 - On 2026-11-16 and 17 I built a release pipeline in a practice repo, `~/Desktop/ci_practice` (GitHub `selma0817/CICD_testing`, private), as a rehearsal for CMBRater's releases. Its runs are the evidence in "Round 2" below.
 - Common interview questions: "walk me through your CI/CD pipeline", "Delivery vs Deployment?", "how do you keep `main` green when many people merge?", "how do you know the release is what you tested?"
 
@@ -41,12 +44,12 @@ trigger (on:)  → what event starts the workflow
 - A step is either `uses:` (run a published action, like importing a library) or `run:` (a shell command, exactly what I'd type in a terminal).
 - A step fails when its command exits with a non-zero **exit code**. That number, not the printed text, is what Actions looks at.
 
-My interview-review `ci.yml`, read as a pipeline:
+My interview-review `ci.yaml`, read as a pipeline:
 
 ```text
-push to main, or any PR
+any PR, or called by deploy.yaml
  └─ job "checks"  (brand-new Ubuntu VM)
-     checkout → setup-node(.nvmrc) → npm ci → typecheck → validate:bank → vitest → build → playwright e2e
+     checkout → setup-node(.nvmrc) → npm ci → typecheck → bank:validate → vitest → build → playwright e2e → pack dist/ (deploys only)
                                               cheap, fast ─────────────────────────────────→ slow, expensive
 ```
 
@@ -117,7 +120,7 @@ on:
 
 PR CI does **not** test the tip of my branch. GitHub builds a temporary merge commit (`refs/pull/N/merge`), "`main` as it is now + my branch", and tests that. That's the "integration" part.
 
-`main` is what gets deployed. In interview-review, `gh workflow run deploy.yml --ref main` builds the newest commit on `main` at that moment. That's why teams protect `main`: if it's what ships, everything has to be checked before it gets there.
+`main` is what gets deployed. In interview-review, every new commit on `main` starts `deploy.yaml`, which tests that commit and publishes it (see "Round 3"). That's why teams protect `main`: if it's what ships, everything has to be checked before it gets there.
 
 ## Semantic conflicts
 
@@ -203,7 +206,7 @@ The question that separates them: **between a green `main` and users, does a per
 
 Both can run exactly the same tests. e2e is **not** what separates them. Removing the human just means automation has to do the human's job.
 
-interview-review is **Delivery**: `deploy.yml` only has `on: workflow_dispatch`. On 2026-11-10, `main` was at `def6f5a` (README change) while the live site was built from `69a7f0e`, one commit behind.
+interview-review was **Delivery** until 2026-11-18: `deploy.yml` only had `on: workflow_dispatch`. On 2026-11-10, `main` was at `def6f5a` (README change) while the live site was built from `69a7f0e`, one commit behind. Since PR #1 (`be00445`, 2026-11-18) it's **Continuous Deployment**: every merge to `main` goes live about a minute later with no button, but only if CI passes (see "Round 3").
 
 ci_practice is also **Delivery**, of a package instead of a website: pushing a `v*` tag is the human button, and users download a file from the release page. CMBRater will have the same shape, because users install a Windows installer.
 
@@ -216,18 +219,20 @@ A car that beeps when the seatbelt is off is a report. A car that won't start un
 | Check in my repos | Gate or report |
 |---|---|
 | `typecheck` step fails in `ci.yml`, so later steps in the job are skipped | gate |
-| PR's CI is red in interview-review, but Merge is still clickable (no branch rule) | report |
-| `verify` fails in `deploy.yml`, so `deploy` (`needs: verify`) is skipped | gate |
-| `ci.yml` is red on `main`, but `gh workflow run deploy.yml` still runs | report |
+| Before 2026-11-18: PR's CI is red in interview-review, but Merge is still clickable (no branch rule) | report |
+| Since 2026-11-18: the `main` ruleset requires `checks`, so Merge stays disabled until it's green | gate |
+| Before 2026-11-18: `verify` fails in `deploy.yml`, so `deploy` (`needs: verify`) is skipped | gate |
+| Before 2026-11-18: `ci.yml` is red on `main`, but `gh workflow run deploy.yml` still runs | report |
+| Since 2026-11-18: `ci / checks` fails in a Deploy run, so `deploy` (`needs: ci`) is skipped | gate |
 | My deploy button press on Nov 5 | checked nothing |
 | ci_practice: `release` job has `needs: verify`, so any failed CI step skips publishing | gate |
 | ci_practice: `validate-tag` fails for a tag that isn't on `main` | gate, but only against accidents (see "Release only reviewed code") |
 | ci_practice: PRs #7 and #8 merged 12 and 10 seconds after opening, before their CI finished | a report nobody waited for |
 | ci_practice: PR #9 merged 27 seconds after its CI turned green | a report, read before acting |
 
-Most real CI/CD failures look like this: the test existed, but nothing connected its result to the merge or deploy. On my private free repos GitHub can't turn a PR check into a gate, so **my habit of waiting for green is the gate**.
+Most real CI/CD failures look like this: the test existed, but nothing connected its result to the merge or deploy. On my private free repos GitHub can't turn a PR check into a gate, so **my habit of waiting for green is the gate**. interview-review is public, so there a ruleset does it (see "Round 3").
 
-### Why an e2e-broken commit can go live in interview-review
+### Why an e2e-broken commit could go live in interview-review
 
 Workflows run independently. `deploy.yml` can't see `ci.yml`'s result unless I connect them on purpose: `on: workflow_run`, calling `ci.yml` as a reusable workflow, or checking the commit's status. Two holes line up:
 
@@ -238,6 +243,10 @@ deploy.yml:  verify: typecheck → bank → test → build ✅  (no e2e) → dep
 ```
 
 Close either hole and the broken commit is blocked. On 2026-11-05 I dispatched the deploy of `69a7f0e` at 23:28:27, 6 seconds after its CI started (CI finished green at 23:29:01). The deploy never waited for CI; it only worked because CI happened to pass.
+
+A trigger alone doesn't close the holes. If I had only added `push: branches: [main]` to `deploy.yml`, a merge would start both workflows at the same moment, and neither would wait for the other. Using the Nov 14 run times (CI reached its e2e verdict 38 s in; a whole Deploy run took 42 s), a commit with broken e2e would have gone live about 4 seconds after CI's red X.
+
+Fixed on 2026-11-18 (PR #1): `deploy.yaml` calls `ci.yaml`, and its deploy job has `needs: ci`. When CI fails, the deploy job doesn't run and fail: it's **skipped**. GitHub's docs: when a job fails or is skipped, every job that needs it is skipped too, unless its `if:` says otherwise ([Workflow syntax, `jobs.<job_id>.needs`](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)). Skipped is what a gate looks like.
 
 ## Round 2: a release pipeline in ci_practice
 
@@ -412,6 +421,175 @@ The fix is two tsconfig files:
 
 I push the tag *before* the workflow runs, and a workflow can't undo my push. If the release fails, the tag still exists with no release attached. To retry, delete the tag (`git push origin --delete vX && git tag -d vX`) and tag again after the fix, or move on to the next version number.
 
+## Round 3: deploy on push in interview-review
+
+On 2026-11-17 and 18 I closed the three interview-review gaps from "Gaps in my own pipelines". PR #1 (`be00445`) made deploys automatic and gated, and a ruleset now protects `main`. A new flashcard now goes PR → CI → merge → deploy, with no button.
+
+### The deploy-on-push pipeline
+
+```text
+PR (every update) → ci.yaml: checks … e2e ✅  (pack step skipped)             → nothing published
+
+merge to main     → deploy.yaml run:
+                      job ci = ci.yaml: checks … e2e ✅ → pack dist/ ──→ job deploy: hand it to Pages → live
+                      └────────────── machine 1: has dist/ ─────────┘    └────── machine 2: empty ──────┘
+```
+
+`ci.yaml`, the trigger and the last steps:
+
+```yaml
+on:
+  workflow_call:          # deploy.yaml may call me
+  pull_request:           # no push trigger: deploy.yaml runs CI on main
+jobs:
+  checks:
+    steps:
+      # … checkout, setup-node, npm ci, typecheck, bank:validate, test, build …
+      - run: npm run test:e2e -- --project=chromium
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./dist
+```
+
+`deploy.yaml`, trimmed:
+
+```yaml
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # the "Run workflow" button
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yaml
+  deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    permissions: { contents: read, pages: write, id-token: write }
+    environment: github-pages
+    steps:                # no checkout, no Node, no build
+      - uses: actions/configure-pages@v6
+      - uses: actions/deploy-pages@v5
+```
+
+PR #4's merge, timed (2026-11-19, UTC):
+
+```text
+03:31:28  merge → commit b4fe68c on main
+03:31:34  ci / checks starts      03:32:10 done ✅  (e2e, then pack dist/)
+03:32:15  deploy starts           03:32:29 done ✅
+live questions.json   last-modified: Thu, 19 Nov 2026 03:32:25 GMT   ← 57 s from merge to live, no button
+```
+
+### Merging a PR is a push to main
+
+A merge adds a new commit to `main`, and GitHub treats that like any other push: every workflow with `on: push: branches: [main]` starts. Squash, merge commit and rebase all count, and so does a plain `git push origin main` (which the ruleset now rejects).
+
+```text
+CICD_testing, 2026-11-17
+22:09:25  PR #9 merged as commit 19ea27f
+22:09:28  push  CI  branch=main  19ea27f       ← 3 s later, event "push"
+```
+
+That's why `ci.yaml` lost its own `push: main` trigger. With it, one card PR would run CI three times: on the PR, by itself after the merge, and again when `deploy.yaml` calls it. The last two test the same commit.
+
+The two runs that are left aren't duplicates, because they test different commits. The PR run tested `main` + my branch as they were then (reported on `af96727` in PR #1). The Deploy run tests the squash commit `be00445`, which was created at merge time and had never been tested (see "Semantic conflicts").
+
+### GitHub Pages serves the last deploy, not the repo
+
+With the "GitHub Actions" source, Pages never reads my repo. It serves the files the last deploy uploaded, until the next deploy replaces them.
+
+```text
+live questions.json, checked 2026-11-17:  last-modified: Sat, 14 Nov 2026 00:12:10 GMT   ← the Nov 14 deploy
+                                          its content last changed in git on 2026-11-05 (69a7f0e)
+live questions.json, checked 2026-11-19:  last-modified: Thu, 19 Nov 2026 03:32:25 GMT   ← PR #4's deploy,
+                                          which only changed .gitignore
+cache-control: max-age=600                ← browsers may also reuse a copy for 10 minutes
+```
+
+- The built site isn't in the repo at all. `.gitignore` lists `dist/`, and git tracks 0 files under it. The repo holds the source (TypeScript, `bank/*.json`). `npm run build` turns it into `dist/` (plain JavaScript and `questions.json`) on the runner, and the runner is thrown away after the job.
+- So the Pages artifact isn't a download for me. It's the only way the built site reaches Pages, which builds nothing itself.
+- Cards are data, not code, but they still go through CI: one malformed card file would break the page that loads them. Loading cards straight from `raw.githubusercontent.com` would skip that check.
+
+### Pack the artifact on the machine that ran e2e
+
+Each job is a fresh machine. The deploy job's machine has no `dist/`, so packing there means building again, which ships a build nobody tested (the "Build once" lesson from Round 2). So `upload-pages-artifact` is the last step of the `checks` job, right after e2e passed on those exact files.
+
+The deploy job then needs no checkout, no setup-node, no `npm ci` and no build. `deploy-pages` fetches the artifact from the same run by itself and hands it to Pages, so there's no download step either. In ci_practice the release job did need `download-artifact`, because `gh release create` uploads files from its own disk.
+
+### Why the pack step checks the event, not the branch
+
+`ci.yaml` starts in three ways. In a called workflow, `github.event_name` is the **caller's** event: GitHub's docs say the `github` context of a reusable workflow always belongs to the caller ([Reusing workflow configurations](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations)).
+
+| How `ci.yaml` starts | `github.event_name` | Pack `dist/`? |
+|---|---|---|
+| A PR is opened or updated | `pull_request` | no: nothing will publish it |
+| A merge, then `deploy.yaml` calls it | `push` | yes |
+| The Run workflow button, then `deploy.yaml` calls it | `workflow_dispatch` | yes |
+
+- `if: github.event_name != 'pull_request'` covers both shipping cases.
+- `== 'push'` would forget the button: CI would pass and skip the pack step, and the deploy job would have no artifact to publish.
+- Which **branch** may deploy is a separate question, answered on the deploy job (see "Two guards keep other branches off the site").
+
+### `needs:` names a job in the same file
+
+`deploy.yaml` defines two jobs, `ci` and `deploy`, so the deploy job says `needs: ci`. `checks` is the job inside `ci.yaml`; `deploy.yaml` doesn't define it, so `needs: checks` names no job here. In ci_practice the caller's job and the called job were both named `verify`, which hid this.
+
+The same job also reports under two names, depending on what started it:
+
+```text
+PR #4 branch commit d6d56ce   check runs: checks                (ci.yaml ran by itself on the PR)
+merge commit b4fe68c          check runs: ci / checks, deploy   (inside the Deploy run)
+```
+
+### Two guards keep other branches off the site
+
+The Run workflow button (`workflow_dispatch`) has a branch dropdown, and the run uses that branch: `github.ref` is the branch that received the dispatch, and the commit is its latest one ([Events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)). The ruleset doesn't help here. It only controls what gets **into** `main`, and the button never goes through `main`.
+
+| Guard | Where it lives | A feature branch run |
+|---|---|---|
+| `if: github.ref == 'refs/heads/main'` on the deploy job | `deploy.yaml` | the deploy job is skipped; CI can still run |
+| `github-pages` environment, deployment branches: `main` only | repo Settings | the deployment isn't allowed |
+
+```text
+github-pages environment:  deployment_branch_policy.custom_branch_policies = true
+                           branch policies = [{"name": "main", "type": "branch"}]
+```
+
+- The `if:` sits on the deploy job, the thing it protects. On the `ci` job it would only work through `needs:`, and it would silently stop working if someone removed `needs:`.
+- The `if:` can be deleted on any branch, because the run uses that branch's copy of `deploy.yaml`. The environment rule lives in Settings, which no branch can edit. Two independent layers like this are called **defense in depth**.
+
+### Protecting main with a ruleset
+
+```text
+ruleset "no direct push to main"   enforcement: active   target: ~DEFAULT_BRANCH   bypass: []
+  deletion, non_fast_forward (no force pushes)
+  pull_request: 0 approvals required
+  required_status_checks: checks (integration 15368 = GitHub Actions), branch must be up to date
+```
+
+- **0 approvals:** GitHub doesn't let a PR's author approve it, and I'm the only person on the repo.
+- **Empty bypass list:** not even I, as admin, can skip the rules.
+- **Up to date:** if `main` moved after the PR's CI ran, I update the branch first, so CI tests the real combination (the fix from "Semantic conflicts").
+- **integration 15368:** the rule wants `checks` reported by GitHub Actions, so another app posting a green `checks` can't open the gate.
+
+I made two setup bugs, and neither showed an error:
+
+1. **No target.** My first save had `"include": []`, so the rules applied to no branch. GitHub only warned: "This ruleset does not target any resources and will not be applied."
+2. **The wrong check name.** I required `ci / checks`, the name from a Deploy run. PRs only ever report `checks`, so every PR would wait for a check that never comes, and Merge would never turn on. A gate that never opens fails as badly as one that never closes.
+
+The proof was a direct push to `main`, on purpose:
+
+```text
+$ git commit --allow-empty -m "test: direct push should be rejected" && git push origin main
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: - Required status check "checks" is expected.
+remote: - Changes must be made through a pull request.
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+```
+
+A rejected push never becomes a push event, so no Deploy ran.
+
 ## GitHub Flow for a solo developer
 
 ```text
@@ -425,15 +603,14 @@ feature/xyz ──PR──▶ CI green ──merge──▶ main ──tag vX.Y.
 - **Wait for green, then merge.** One change per PR, so a red run points at one change.
 - **Read the yellow annotations.** "Node.js 20 is deprecated" on the `@v4` actions is a warning today and a failure later.
 
-## Gaps in my own pipelines (as of 2026-11-17)
+## Gaps in my own pipelines (as of 2026-11-18)
 
-**interview-review** (rechecked 2026-11-17, unchanged since 2026-11-10):
+**interview-review** (rechecked 2026-11-18):
 
-- **`main` is unprotected** (public repo, "Branch not protected"). A red PR can be merged, and I can push straight to `main`.
-- **`deploy.yml` ignores `ci.yml`'s result**, and `verify` skips e2e. An e2e-broken commit can go live.
-- **`deploy.yml` rebuilds** (`npm ci` + `npm run build` again) instead of deploying the output that was checked.
-- The fix is what I built in ci_practice: a deploy job that `needs` the full checks, including e2e, and ships the tested `dist/`.
-- `ci.yml` runs typecheck twice: once as its own step and again inside `build`. Harmless; the separate step fails earlier with a clearer name.
+- Fixed on 2026-11-18 (see "Round 3"): `main` was unprotected, the deploy ignored CI's result and skipped e2e, and the deploy rebuilt instead of shipping the checked output.
+- **`deploy.yaml` is only tested by real merges.** A PR runs `ci.yaml` alone, so a mistake in `deploy.yaml` first shows up after a merge. It fails safe: `needs: ci` and the environment rule still stop a broken site.
+- **Two guards I haven't seen fail yet:** the Run workflow button since the change (does the pack step run on `workflow_dispatch`?), and the `github-pages` environment rule refusing a non-`main` branch.
+- `ci.yaml` runs typecheck twice: once as its own step and again inside `build`. Harmless; the separate step fails earlier with a clearer name.
 
 **CMBRater:**
 
@@ -447,7 +624,9 @@ feature/xyz ──PR──▶ CI green ──merge──▶ main ──tag vX.Y.
 
 ## How I'd answer in an interview
 
-**"Walk me through your CI/CD."** On every PR and every push to `main`, GitHub Actions runs a fresh Ubuntu VM: `npm ci` from the lockfile, typecheck, data validation, unit tests, build, then Playwright e2e, cheapest first. PR runs test the merge of my branch into the current `main`. Deploys to GitHub Pages are manual (Continuous Delivery). One gap I found: the deploy workflow doesn't depend on CI's result and doesn't run e2e, so I'd gate it on a green CI run for that exact commit.
+**"Walk me through your CI/CD."** Every PR runs CI on a fresh Ubuntu VM: `npm ci` from the lockfile, typecheck, data validation, unit tests, build, then Playwright e2e, cheapest first. PR runs test the merge of my branch into the current `main`. `main` is protected: changes arrive only by PR, with a green `checks` and an up-to-date branch. Each merge triggers the deploy workflow, which calls the same CI workflow on the merged commit and `needs` it, so a red CI skips the deploy. CI packs the `dist/` that passed e2e, and the deploy job publishes that artifact without rebuilding. That's Continuous Deployment, about a minute from merge to live.
+
+**"How do you stop a feature branch from deploying?"** Two independent guards. The deploy job has `if: github.ref == 'refs/heads/main'`, and the Pages environment only allows `main` in the repo's settings, which no branch's YAML can change. Branch protection doesn't help here: a manual run of the workflow on a branch never goes through `main`.
 
 **"How do you keep `main` green with many PRs?"** A PR's green check is about "old `main` + PR". After another PR merges, it's stale, and semantic conflicts merge cleanly as text. So test the exact future `main`: require up-to-date branches, or use a merge queue. And run CI on `main` after merge as a safety net.
 
@@ -463,9 +642,8 @@ feature/xyz ──PR──▶ CI green ──merge──▶ main ──tag vX.Y.
 
 ## Still to learn
 
-Done in ci_practice: build once, least-privilege `contents` permissions, one list of checks, release only from `main`.
+Done in ci_practice: build once, least-privilege `contents` permissions, one list of checks, release only from `main`. Done in interview-review on 2026-11-18: deploy on push to `main`, gated on the full checks including e2e, shipping the tested `dist/`, with `main` protected.
 
-- Apply it to interview-review: deploy on push to `main`, gated on the full checks including e2e, shipping the tested `dist/`
 - CMBRater releases: a `windows-latest` runner, packaging both apps in CI, matrix builds
 - Windows code signing, with secrets kept away from PR jobs (`pull_request` vs `pull_request_target`)
 - Versioning two apps in one repo (one tag, or `client-v…` / `coordinator-v…`)
@@ -479,7 +657,7 @@ Done in ci_practice: build once, least-privilege `contents` permissions, one lis
 2. **Right conclusion, shaky reason.** I said v1.0.0 was safe "because it's from main". The real reason was the `npm run ci` gate inside `release.yaml`. Interviewers push on the why. Ask: **which exact line makes this true?**
 3. **Losing track of which commit, file or run.** I thought the CI artifact came from the PR (it came from `main`, the same commit). I didn't expect GitHub to use the tagged commit's own `release.yaml`, checkout to empty the workspace, or `gh` to need `.git`. Ask: **which commit, which run, which machine, and what's on its disk right now?**
 4. **Look-alike names.** `npm ci` vs `npm run ci`, Delivery vs Deployment (I had them backwards), staged vs tracked, CI runner vs production. Ask: **what does each word literally do?**
-5. **Only seeing the happy path.** Almost every run I've watched was green, and I chose not to run the E2 refusal test because I'm confident in the logic. A guard I've never seen fail hasn't been tested, and I've had little practice reading a red run's logs. When something new protects me, trigger its failure once on purpose.
+5. **Only seeing the happy path.** Almost every run I've watched was green, and I chose not to run the E2 refusal test because I'm confident in the logic. A guard I've never seen fail hasn't been tested, and I've had little practice reading a red run's logs. When something new protects me, trigger its failure once on purpose. First time: on 2026-11-18 I pushed straight to interview-review's `main` and watched the ruleset reject it (GH013).
 6. **Bundling changes.** PR #8 mixed the tag check with version updates. If it had gone red, I'd have had to work out which change broke it. One change per PR.
 
 ## Common mistakes
@@ -571,6 +749,44 @@ Right that `main` isn't the only valid source: release branches exist. Wrong to 
 ### Mistake 21: merging an empty PR just to get the "Delete branch" button
 
 Close the PR and delete from there, use the Branches page, or run `git push origin --delete <branch>`. An empty merge adds an empty commit and a CI run to `main`.
+
+From the interview-review deploy-on-push exercise on 2026-11-17 and 18.
+
+### Mistake 22: thinking a deploy triggered by the same push waits for CI (mine)
+
+Adding `push: branches: [main]` to `deploy.yml` alone starts both workflows at the same moment, and neither sees the other's result. With e2e broken, CI goes red and the deploy still publishes, about 4 seconds later. Only a link makes it wait: `deploy.yaml` calls `ci.yaml` and `needs` it.
+
+### Mistake 23: thinking the deploy job "runs and fails" when CI fails (mine)
+
+With `needs: ci`, it's skipped: it never starts. Skipped is what a gate looks like.
+
+### Mistake 24: thinking a merged PR isn't a push to main (mine)
+
+A merge adds a commit to `main`, which is a push. PR #9 in CICD_testing merged at 22:09:25, and a `push` CI run started at 22:09:28. Keeping `push: main` in `ci.yaml` would have tested every merged commit twice.
+
+### Mistake 25: thinking GitHub Pages picks up changed files in the repo by itself (mine)
+
+Pages serves what the last deploy uploaded. The live `questions.json` said `last-modified` Nov 14 (the deploy), though its content last changed on Nov 5. The built site isn't even in the repo: `dist/` is gitignored.
+
+### Mistake 26: thinking the site's zip belongs in the deploy job, not in CI (mine)
+
+The deploy job runs on a fresh machine with no `dist/`, so it would have to build again and ship an untested build. Pack `dist/` at the end of the `checks` job, right after e2e. The deploy job needs no checkout, Node or build.
+
+### Mistake 27: thinking the pack step should check the branch (mine)
+
+It checks what started the run: `github.event_name != 'pull_request'`. `== 'push'` would break the Run workflow button (`workflow_dispatch`), whose deploy would find no artifact. The branch check is the deploy job's `if:`.
+
+### Mistake 28: thinking `needs:` can name the job inside the called workflow (mine)
+
+`needs:` names a job in the same file. `deploy.yaml`'s jobs are `ci` and `deploy`, so it's `needs: ci`, not `needs: checks`.
+
+### Mistake 29: thinking the required check is the name shown in a Deploy run (mine)
+
+I required `ci / checks`. On a PR the same job reports as `checks`, so the required check would never arrive and Merge would never turn on.
+
+### Mistake 30: thinking a ruleset applies once its rules are set (mine)
+
+It also needs a target. Mine had `"include": []` and protected nothing until I added the default branch.
 
 ## Related notes
 
