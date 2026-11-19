@@ -234,7 +234,7 @@ Most real CI/CD failures look like this: the test existed, but nothing connected
 
 ### Why an e2e-broken commit could go live in interview-review
 
-Workflows run independently. `deploy.yml` can't see `ci.yml`'s result unless I connect them on purpose: `on: workflow_run`, calling `ci.yml` as a reusable workflow, or checking the commit's status. Two holes line up:
+Workflows run independently. `deploy.yml` can't see `ci.yml`'s result unless I connect them on purpose: call `ci.yml` as a reusable workflow and `needs:` it, check the commit's status, or use `on: workflow_run` plus a check that CI's conclusion was `success`. That last check matters because "a workflow run is triggered regardless of the conclusion of the previous workflow" ([Events that trigger workflows, `workflow_run`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)). Two holes line up:
 
 ```text
 ci.yml:      typecheck → bank → test → build → e2e ❌   ← result goes nowhere
@@ -244,7 +244,7 @@ deploy.yml:  verify: typecheck → bank → test → build ✅  (no e2e) → dep
 
 Close either hole and the broken commit is blocked. On 2026-11-05 I dispatched the deploy of `69a7f0e` at 23:28:27, 6 seconds after its CI started (CI finished green at 23:29:01). The deploy never waited for CI; it only worked because CI happened to pass.
 
-A trigger alone doesn't close the holes. If I had only added `push: branches: [main]` to `deploy.yml`, a merge would start both workflows at the same moment, and neither would wait for the other. Using the Nov 14 run times (CI reached its e2e verdict 38 s in; a whole Deploy run took 42 s), a commit with broken e2e would have gone live about 4 seconds after CI's red X.
+A trigger alone doesn't close the holes. If I had only added `push: branches: [main]` to `deploy.yml`, a merge would trigger both workflows independently, and neither would wait for the other. CI's red e2e would stop nothing: as long as Deploy's own jobs passed (its `verify` had no e2e), the broken commit would go live. If both had started together, the Nov 14 run times (CI reached its e2e verdict 38 s in; a whole Deploy run took 42 s) put it live about 4 seconds after CI's red X.
 
 Fixed on 2026-11-18 (PR #1): `deploy.yaml` calls `ci.yaml`, and its deploy job has `needs: ci`. When CI fails, the deploy job doesn't run and fail: it's **skipped**. GitHub's docs: when a job fails or is skipped, every job that needs it is skipped too, unless its `if:` says otherwise ([Workflow syntax, `jobs.<job_id>.needs`](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)). Skipped is what a gate looks like.
 
@@ -425,6 +425,14 @@ I push the tag *before* the workflow runs, and a workflow can't undo my push. If
 
 On 2026-11-17 and 18 I closed the three interview-review gaps from "Gaps in my own pipelines". PR #1 (`be00445`) made deploys automatic and gated, and a ruleset now protects `main`. A new flashcard now goes PR → CI → merge → deploy, with no button.
 
+Three different mechanisms do the work, and none can stand in for another:
+
+| Mechanism | Decides | In interview-review |
+|---|---|---|
+| Triggers (`on:`) | when a workflow starts | a PR starts CI; a push to `main` or the Run workflow button starts Deploy |
+| Job dependencies (`needs:`) | which job waits for which, inside one run | `deploy` waits for `ci`, and is skipped if it fails |
+| Rulesets and environment rules (repo Settings) | what may merge into `main`, and which branches may deploy | PRs need a green `checks`; only `main` may deploy to `github-pages` |
+
 ### The deploy-on-push pipeline
 
 ```text
@@ -491,13 +499,13 @@ CICD_testing, 2026-11-17
 22:09:28  push  CI  branch=main  19ea27f       ← 3 s later, event "push"
 ```
 
-That's why `ci.yaml` lost its own `push: main` trigger. With it, one card PR would run CI three times: on the PR, by itself after the merge, and again when `deploy.yaml` calls it. The last two test the same commit.
+That's why `ci.yaml` lost its own `push: main` trigger. With it (next to `pull_request`), one card PR, opened once and merged once, would run CI's `checks` job three times: in two standalone CI runs (on the PR, and on the merge's push) and once more inside the Deploy run, where `deploy.yaml` calls `ci.yaml`. The last two test the same commit.
 
 The two runs that are left aren't duplicates, because they test different commits. The PR run tested `main` + my branch as they were then (reported on `af96727` in PR #1). The Deploy run tests the squash commit `be00445`, which was created at merge time and had never been tested (see "Semantic conflicts").
 
 ### GitHub Pages serves the last deploy, not the repo
 
-With the "GitHub Actions" source, Pages never reads my repo. It serves the files the last deploy uploaded, until the next deploy replaces them.
+Pages has two publishing sources: a branch, published when changes are pushed to it, or a GitHub Actions workflow ([Configuring a publishing source](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)). interview-review uses **GitHub Actions**. With that source, Pages doesn't watch the repo: it serves the files the last successful deploy uploaded, until the next one replaces them.
 
 ```text
 live questions.json, checked 2026-11-17:  last-modified: Sat, 14 Nov 2026 00:12:10 GMT   ← the Nov 14 deploy
@@ -513,7 +521,7 @@ cache-control: max-age=600                ← browsers may also reuse a copy for
 
 ### Pack the artifact on the machine that ran e2e
 
-Each job is a fresh machine. The deploy job's machine has no `dist/`, so packing there means building again, which ships a build nobody tested (the "Build once" lesson from Round 2). So `upload-pages-artifact` is the last step of the `checks` job, right after e2e passed on those exact files.
+Each job gets its own machine: "each GitHub-hosted runner is a new virtual machine" ([GitHub-hosted runners](https://docs.github.com/en/actions/concepts/runners/github-hosted-runners)), and both jobs here use `ubuntu-latest`. So the `dist/` built in the `checks` job isn't on the deploy job's machine, and packing there means building again, which ships output nobody tested (the "Build once" lesson from Round 2). So `upload-pages-artifact` is the last step of the `checks` job, right after e2e passed on those exact files: Playwright tests the site through `vite preview`, which serves `dist/`.
 
 The deploy job then needs no checkout, no setup-node, no `npm ci` and no build. `deploy-pages` fetches the artifact from the same run by itself and hands it to Pages, so there's no download step either. In ci_practice the release job did need `download-artifact`, because `gh release create` uploads files from its own disk.
 
@@ -533,7 +541,7 @@ The deploy job then needs no checkout, no setup-node, no `npm ci` and no build. 
 
 ### `needs:` names a job in the same file
 
-`deploy.yaml` defines two jobs, `ci` and `deploy`, so the deploy job says `needs: ci`. `checks` is the job inside `ci.yaml`; `deploy.yaml` doesn't define it, so `needs: checks` names no job here. In ci_practice the caller's job and the called job were both named `verify`, which hid this.
+`deploy.yaml` defines two jobs, `ci` and `deploy`, so the deploy job says `needs: ci`. `checks` is the job inside `ci.yaml`; `deploy.yaml` doesn't define it, so `needs: checks` names no job here. GitHub's docs describe `needs` as the jobs that must complete successfully before this one runs, and their examples name jobs from the same workflow ([Workflow syntax, `jobs.<job_id>.needs`](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)). In ci_practice the caller's job and the called job were both named `verify`, which hid this.
 
 The same job also reports under two names, depending on what started it:
 
@@ -541,6 +549,8 @@ The same job also reports under two names, depending on what started it:
 PR #4 branch commit d6d56ce   check runs: checks                (ci.yaml ran by itself on the PR)
 merge commit b4fe68c          check runs: ci / checks, deploy   (inside the Deploy run)
 ```
+
+That naming is what my repo's check runs show. I haven't found it described in GitHub's docs.
 
 ### Two guards keep other branches off the site
 
@@ -557,7 +567,8 @@ github-pages environment:  deployment_branch_policy.custom_branch_policies = tru
 ```
 
 - The `if:` sits on the deploy job, the thing it protects. On the `ci` job it would only work through `needs:`, and it would silently stop working if someone removed `needs:`.
-- The `if:` can be deleted on any branch, because the run uses that branch's copy of `deploy.yaml`. The environment rule lives in Settings, which no branch can edit. Two independent layers like this are called **defense in depth**.
+- The `if:` can be deleted on any branch, because the run uses that branch's copy of `deploy.yaml`. The environment rule lives in repo Settings: no branch's YAML can change it, and only a repository admin can configure it (for a personal repo like mine, the owner) ([Managing environments for deployment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)). Two independent layers like this are called **defense in depth**.
+- The rule applies because the deploy job names `environment: github-pages`. A branch that also deleted that line is a case I haven't checked, and I haven't yet watched the rule refuse a branch.
 
 ### Protecting main with a ruleset
 
@@ -576,7 +587,7 @@ ruleset "no direct push to main"   enforcement: active   target: ~DEFAULT_BRANCH
 I made two setup bugs, and neither showed an error:
 
 1. **No target.** My first save had `"include": []`, so the rules applied to no branch. GitHub only warned: "This ruleset does not target any resources and will not be applied."
-2. **The wrong check name.** I required `ci / checks`, the name from a Deploy run. PRs only ever report `checks`, so every PR would wait for a check that never comes, and Merge would never turn on. A gate that never opens fails as badly as one that never closes.
+2. **The wrong check name.** I required `ci / checks`, the name from a Deploy run. On a PR, `ci.yaml` runs by itself and reports `checks`, and no PR workflow reports `ci / checks` (seen in my check runs, under "`needs:` names a job in the same file"). GitHub's docs describe the same situation for a required check whose workflow never runs on the PR: the PR "is blocked with 'Waiting for status to be reported.'" ([Troubleshooting required status checks](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks)). So Merge would never have turned on. I fixed the name before opening a PR, so I never saw that block myself. A gate that never opens fails as badly as one that never closes.
 
 The proof was a direct push to `main`, on purpose:
 
@@ -754,7 +765,7 @@ From the interview-review deploy-on-push exercise on 2026-11-17 and 18.
 
 ### Mistake 22: thinking a deploy triggered by the same push waits for CI (mine)
 
-Adding `push: branches: [main]` to `deploy.yml` alone starts both workflows at the same moment, and neither sees the other's result. With e2e broken, CI goes red and the deploy still publishes, about 4 seconds later. Only a link makes it wait: `deploy.yaml` calls `ci.yaml` and `needs` it.
+Adding `push: branches: [main]` to `deploy.yml` alone triggers both workflows independently, and neither waits for the other's result. With e2e broken, CI goes red and the deploy still publishes, as long as its own jobs pass. Only a link makes it wait: `deploy.yaml` calls `ci.yaml` and `needs` it.
 
 ### Mistake 23: thinking the deploy job "runs and fails" when CI fails (mine)
 
@@ -766,7 +777,7 @@ A merge adds a commit to `main`, which is a push. PR #9 in CICD_testing merged a
 
 ### Mistake 25: thinking GitHub Pages picks up changed files in the repo by itself (mine)
 
-Pages serves what the last deploy uploaded. The live `questions.json` said `last-modified` Nov 14 (the deploy), though its content last changed on Nov 5. The built site isn't even in the repo: `dist/` is gitignored.
+With the GitHub Actions publishing source, Pages serves what the last deploy uploaded. The live `questions.json` said `last-modified` Nov 14 (the deploy), though its content last changed on Nov 5. The built site isn't even in the repo: `dist/` is gitignored.
 
 ### Mistake 26: thinking the site's zip belongs in the deploy job, not in CI (mine)
 
