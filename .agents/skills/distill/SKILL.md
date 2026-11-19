@@ -101,14 +101,14 @@ cd ~/Desktop/interview-review
 git switch main && git pull
 git switch -c cards/<YYYY-MM-DD>-<topic-slug>
 npm run -s bank:add -- .drafts/<file>.json
-npm run -s bank:validate && npm test
+npm run -s check                   # CI's checks: typecheck, bank, unit tests, build, e2e
 git add bank/                      # only the bank; never git add -A here
 git commit -m "Add N cards: <session topic>"
 git push -u origin cards/<YYYY-MM-DD>-<topic-slug>
 gh pr create --title "Add N cards: <session topic>" --body "<one line per card: id · type · topics · question; plus the check results>"
 ```
 
-Report the PR link and tell the user to merge it when `checks` is green. Merging deploys automatically (about a minute). Offer to verify the live site afterwards. Delete the drafts file once the PR is merged.
+If `npm run check` fails, fix it before pushing; never open a card PR that is red locally. Report the PR link and tell the user to merge it when `checks` is green. Merging deploys automatically (about a minute). Offer to verify the live site afterwards. Delete the drafts file once the PR is merged.
 
 ## Side flows
 
