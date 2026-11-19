@@ -38,7 +38,7 @@ The key rule:
 > Quantize the tensor that is causing the bottleneck.
 
 If model weights are too large, use [[Weight Quantization]].  
-If long-context serving runs out of memory because of [[KV Cache]], use [[KV Cache Quantization]], [[Grouped-Query Attention]], [[Multi-Query Attention]], [[Multi-Head Latent Attention]], or [[PagedAttention]].  
+If long-context serving runs out of memory because of [[KV Cache]], use [[KV Cache Quantization]], [[Grouped-Query Attention]], [[Multi-Query Attention]], [[Multi-Head Latent Attention]], or [[Continuous Batching and PagedAttention|PagedAttention]].  
 If computation is bandwidth- or kernel-limited, activation/weight quantization may help if the hardware can exploit low-precision kernels.
 
 Quantization is a tradeoff, not a free lunch.
@@ -442,7 +442,7 @@ The right quantization strategy depends on what is limiting the system.
 |---|---|
 |weights too large to fit|weight quantization|
 |KV cache too large|KV-cache quantization, [[GQA]], [[MQA]], [[MLA]]|
-|KV cache fragmented/wasted|[[PagedAttention]]|
+|KV cache fragmented/wasted|[[Continuous Batching and PagedAttention\|PagedAttention]]|
 |GPU underutilized due to variable request lengths|[[Continuous Batching]]|
 |memory bandwidth limited by K/V reads|KV-cache quantization, GQA/MQA/MLA|
 |compute-bound matrix multiplication|low-precision compute kernels|
@@ -622,7 +622,7 @@ Quantization is one tool in the larger [[LLM Serving]] toolbox.
 |[[Multi-Query Attention]]|per-token KV-cache size|
 |[[Multi-Head Latent Attention]]|compressed KV representation|
 |[[Continuous Batching]]|poor GPU utilization from variable-length requests|
-|[[PagedAttention]]|KV-cache fragmentation and over-allocation|
+|[[Continuous Batching and PagedAttention\|PagedAttention]]|KV-cache fragmentation and over-allocation|
 
 Important distinction:
 
@@ -689,7 +689,7 @@ PagedAttention:
     
 - [[Continuous Batching]]
     
-- [[PagedAttention]]
+- [[Continuous Batching and PagedAttention|PagedAttention]]
     
 - [[LLM Serving]]
     

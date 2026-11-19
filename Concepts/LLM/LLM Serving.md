@@ -401,7 +401,7 @@ TensorRT-LLM uses the production term “in-flight batching” for this style of
 
 ## 9. PagedAttention
 
-[[PagedAttention]] addresses KV-cache memory management.
+[[Continuous Batching and PagedAttention|PagedAttention]] addresses KV-cache memory management.
 
 Naive KV-cache allocation may require large contiguous memory blocks for each request. This can cause:
 
@@ -768,7 +768,7 @@ User request
     
 - [[Continuous Batching]]
     
-- [[PagedAttention]]
+- [[Continuous Batching and PagedAttention|PagedAttention]]
     
 - [[Quantization]]
     

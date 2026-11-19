@@ -1,3 +1,7 @@
+---
+tags:
+  - moc
+---
 
 ## Agent Fundamentals
 

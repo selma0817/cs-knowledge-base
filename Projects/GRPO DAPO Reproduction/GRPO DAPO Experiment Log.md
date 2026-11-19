@@ -2,6 +2,14 @@
 date: 2026-10-02
 aliases:
   - grpo-dapo experiment log
+tags:
+  - topic/rl-fine-tuning
+  - grpo
+  - dapo
+  - qwen
+  - gsm8k
+  - project
+  - ablation
 ---
 Dated record of every run in [[GRPO DAPO Project Overview|grpo-dapo]]: what I expected, what ran, what happened, and what I decided. Résumé numbers and interview stories come from here.
 

@@ -16,7 +16,7 @@ status: evergreen
 ---
 ## Summary
 
-[[Continuous Batching]] and [[PagedAttention]] are two complementary techniques for efficient [[LLM Serving]].
+[[Continuous Batching]] and PagedAttention are two complementary techniques for efficient [[LLM Serving]].
 
 They solve different problems:
 
@@ -327,7 +327,7 @@ Both types of fragmentation reduce the effective KV-cache capacity of the GPU.
 
 ## 9. PagedAttention
 
-[[PagedAttention]] solves the KV-cache memory-management problem by borrowing the idea of paging from operating systems.[3](https://chatgpt.com/g/g-p-6a3c6f2c6af0819186762a3caba06daf-knowledge-graph-building/c/6a3c6f2e-23fc-83ea-b1b8-599b4e00861a#user-content-fn-vllm)
+PagedAttention solves the KV-cache memory-management problem by borrowing the idea of paging from operating systems.[3](https://chatgpt.com/g/g-p-6a3c6f2c6af0819186762a3caba06daf-knowledge-graph-building/c/6a3c6f2e-23fc-83ea-b1b8-599b4e00861a#user-content-fn-vllm)
 
 Instead of storing each request's KV cache in one large contiguous chunk, PagedAttention splits the KV cache into fixed-size blocks or pages.
 
@@ -411,7 +411,7 @@ They solve different layers of the serving problem.
 |Technique|Main problem solved|What it changes|
 |---|---|---|
 |[[Continuous Batching]]|static batches become sparse when requests finish at different times|request scheduling|
-|[[PagedAttention]]|KV cache memory is fragmented and over-allocated|KV-cache memory layout|
+|PagedAttention|KV cache memory is fragmented and over-allocated|KV-cache memory layout|
 |[[MQA]] / [[GQA]] / [[MLA]]|each token's KV cache is too large|model architecture|
 
 A compact mapping:
@@ -548,8 +548,6 @@ This is why modern LLM serving engines are not just “running a model.” They 
 - [[Decode]]
     
 - [[LLM Serving]]
-    
-- [[PagedAttention]]
     
 - [[Continuous Batching]]
     

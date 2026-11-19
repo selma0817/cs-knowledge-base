@@ -1,5 +1,7 @@
 ---
-tags: [interview, mock, agent-developer]
+tags:
+  - mock-interview
+  - agent-developer
 date: 2026-07-22
 aliases: [Mock Interview Questions, Agent Developer Q&A]
 ---

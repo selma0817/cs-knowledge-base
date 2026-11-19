@@ -81,7 +81,7 @@ Post-training adapts a pretrained LLM: **SFT** imitates demonstrations, **parame
     - The classic pipeline, for interview completeness
 
 11. [[RL Training Systems]]
-    - Generating rollouts with vLLM, memory, train–inference mismatch; connects to [[LLM Serving]] and [[PagedAttention]]
+    - Generating rollouts with vLLM, memory, train–inference mismatch; connects to [[LLM Serving]] and [[Continuous Batching and PagedAttention|PagedAttention]]
 
 ## Core mental model
 

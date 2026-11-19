@@ -3,6 +3,13 @@ date: 2026-10-02
 aliases:
   - grpo-dapo project
   - GRPO DAPO reproduction
+tags:
+  - topic/rl-fine-tuning
+  - grpo
+  - dapo
+  - qwen
+  - gsm8k
+  - project
 ---
 **grpo-dapo** reproduces GRPO and DAPO for math reasoning on Qwen2.5-Instruct (0.5B, then 1.5B) with LoRA, in my own PyTorch + Transformers + PEFT code, and ablates DAPO's four techniques (Clip-Higher, Dynamic Sampling, Token-level Loss, Overlong Reward Shaping) on GSM8K and later MATH. Code: `~/Desktop/grpo-dapo`, GitHub `selma0817/grpo-dapo` (private until results are in).
 

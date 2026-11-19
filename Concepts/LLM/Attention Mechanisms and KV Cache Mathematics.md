@@ -611,14 +611,14 @@ A larger KV cache means:
     
 - harder scheduling for [[Continuous Batching]]
     
-- more need for [[PagedAttention]] or KV-cache paging
+- more need for [[Continuous Batching and PagedAttention|PagedAttention]] or KV-cache paging
     
 
 This is why attention architecture, cache layout, and inference engine design are connected.
 
 [[MQA]], [[GQA]], and [[MLA]] reduce the cache at the model architecture level.
 
-[[PagedAttention]] and [[vLLM]] manage the cache at the serving-system level.
+[[Continuous Batching and PagedAttention|PagedAttention]] and [[vLLM]] manage the cache at the serving-system level.
 
 [[Quantization]] reduces weight memory, and sometimes activation/cache memory if KV-cache quantization is used, but ordinary weight-only quantization does not directly solve the KV-cache bottleneck.
 
@@ -665,7 +665,7 @@ This is why attention architecture, cache layout, and inference engine design ar
     
 - [[Rotary Position Embedding]]
     
-- [[PagedAttention]]
+- [[Continuous Batching and PagedAttention|PagedAttention]]
     
 - [[Continuous Batching]]
     
