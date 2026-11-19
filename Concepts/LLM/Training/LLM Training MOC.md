@@ -4,6 +4,10 @@ aliases:
   - llm training moc
   - post-training moc
   - fine-tuning moc
+tags:
+  - topic/rl-fine-tuning
+  - topic/llm-training
+  - moc
 ---
 # LLM Training MOC
 

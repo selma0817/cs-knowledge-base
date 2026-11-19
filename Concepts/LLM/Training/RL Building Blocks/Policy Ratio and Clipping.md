@@ -1,12 +1,10 @@
 ---
 date: 2026-09-29
 tags:
-  - llm
-  - post-training
-  - reinforcement-learning
+  - topic/rl-fine-tuning
   - ppo
-  - grpo
-  - interview
+  - importance-ratio
+  - clipping
 aliases:
   - policy ratio
   - importance ratio

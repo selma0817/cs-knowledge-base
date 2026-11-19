@@ -11,10 +11,14 @@ aliases:
   - Milvus
   - embeddings
 tags:
-  - ai/llm/retrieval
-  - ai/systems
-  - databases
-  - interview
+  - topic/search
+  - topic/storage-indexing
+  - vector-database
+  - ann
+  - hnsw
+  - ivf
+  - embeddings
+  - pgvector
 ---
 A **vector database** stores embeddings and serves **approximate nearest-neighbor (ANN)** search — the retrieval engine under [[Retrieval-Augmented Generation]]. The core tradeoffs are index type (recall vs latency vs memory) and whether to use a dedicated store or a general DB like pgvector.
 

@@ -1,5 +1,10 @@
 ---
-tags: [memory, agents, context-window]
+tags:
+  - topic/llm-apis-prompting
+  - topic/agents
+  - context-window
+  - compaction
+  - summarization
 date: 2026-06-24
 aliases: [Message Compaction, Context Limits, Sliding Window]
 ---

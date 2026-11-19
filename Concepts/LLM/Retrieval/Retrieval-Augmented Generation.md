@@ -8,10 +8,11 @@ aliases:
   - RAG evaluation
   - faithfulness
 tags:
-  - ai/llm/retrieval
-  - ai/llm/rag
-  - ai/systems
-  - interview
+  - topic/rag
+  - topic/search
+  - chunking
+  - embeddings
+  - retrieval
 ---
 **Retrieval-Augmented Generation (RAG)** retrieves relevant documents from an external knowledge base and injects them into the LLM's prompt before generation, grounding answers in up-to-date, private, or domain-specific data without retraining.
 

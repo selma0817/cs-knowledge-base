@@ -1,5 +1,10 @@
 ---
-tags: [prompt-engineering, latency, cost-optimization, prompt-caching]
+tags:
+  - topic/llm-inference
+  - topic/llm-apis-prompting
+  - prompt-caching
+  - cost-optimization
+  - latency
 date: 2026-06-24
 aliases: [Statelessness, Cache Hits, KV Tensors]
 ---

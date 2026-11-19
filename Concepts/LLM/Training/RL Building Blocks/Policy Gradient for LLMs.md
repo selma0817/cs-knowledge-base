@@ -1,11 +1,9 @@
 ---
 date: 2026-09-29
 tags:
-  - llm
-  - post-training
-  - reinforcement-learning
+  - topic/rl-fine-tuning
   - policy-gradient
-  - interview
+  - credit-assignment
 aliases:
   - policy gradient
   - REINFORCE

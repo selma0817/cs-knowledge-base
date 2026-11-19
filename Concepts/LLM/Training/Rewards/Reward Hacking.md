@@ -1,11 +1,9 @@
 ---
 date: 2026-10-01
 tags:
-  - llm
-  - post-training
-  - reinforcement-learning
-  - reward
-  - interview
+  - topic/rl-fine-tuning
+  - reward-hacking
+  - reward-design
 aliases:
   - reward hacking
   - specification gaming

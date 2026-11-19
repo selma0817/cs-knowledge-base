@@ -5,10 +5,14 @@ aliases:
   - Attention Cache Math
   - MQA GQA MLA
 tags:
-  - ai/llm/architecture
-  - ai/llm/inference
-  - ai/attention
-  - ai/kv-cache
+  - topic/transformers
+  - topic/llm-inference
+  - attention
+  - kv-cache
+  - mqa
+  - gqa
+  - mla
+  - rope
 status: evergreen
 ---
 ## Summary

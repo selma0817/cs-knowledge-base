@@ -1,13 +1,11 @@
 ---
 date: 2026-10-02
 tags:
-  - llm
-  - post-training
-  - fine-tuning
+  - topic/llm-training
   - lora
+  - qlora
   - peft
-  - memory
-  - interview
+  - quantization
 aliases:
   - LoRA
   - QLoRA

@@ -7,11 +7,9 @@ aliases:
   - KV Cache Quantization
   - Low-Precision Inference
 tags:
-  - ai/llm/inference
-  - ai/llm/serving
-  - ai/quantization
-  - ai/systems
-  - ai/kv-cache
+  - topic/llm-inference
+  - quantization
+  - kv-cache
 status: evergreen
 ---
 ## Summary

@@ -1,12 +1,9 @@
 ---
 date: 2026-10-02
 tags:
-  - llm
-  - post-training
-  - reinforcement-learning
+  - topic/rl-fine-tuning
   - kl-divergence
-  - grpo
-  - interview
+  - reference-model
 aliases:
   - KL penalty
   - KL divergence

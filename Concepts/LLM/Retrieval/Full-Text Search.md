@@ -1,10 +1,11 @@
 ---
 date: 2026-11-12
 tags:
-  - ai/llm/retrieval
-  - search
+  - topic/search
   - elasticsearch
-  - interview
+  - bm25
+  - inverted-index
+  - analyzer
 aliases:
   - full-text search
   - inverted index

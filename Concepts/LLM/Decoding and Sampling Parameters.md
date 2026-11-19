@@ -1,11 +1,11 @@
 ---
 date: 2026-10-01
 tags:
-  - llm
-  - inference
+  - topic/llm-inference
   - decoding
   - sampling
-  - interview
+  - temperature
+  - top-p
 aliases:
   - decoding
   - sampling parameters

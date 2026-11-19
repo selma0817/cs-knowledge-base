@@ -1,13 +1,10 @@
 ---
 date: 2026-10-06
 tags:
-  - llm
-  - post-training
-  - fine-tuning
-  - memory
-  - activations
-  - systems
-  - interview
+  - topic/llm-training
+  - topic/deep-learning
+  - gradient-checkpointing
+  - activation-memory
 aliases:
   - gradient checkpointing
   - activation checkpointing

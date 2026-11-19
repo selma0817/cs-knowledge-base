@@ -1,12 +1,10 @@
 ---
 date: 2026-10-01
 tags:
-  - llm
-  - post-training
-  - reinforcement-learning
-  - reward
+  - topic/rl-fine-tuning
   - rlvr
-  - interview
+  - reward-design
+  - gsm8k
 aliases:
   - rule-based reward
   - verifiable reward

@@ -1,5 +1,8 @@
 ---
-tags: [ai-engineering, api, openai, anthropic]
+tags:
+  - topic/llm-apis-prompting
+  - openai
+  - anthropic
 date: 2026-06-24
 aliases: [API Endpoints, OpenAI vs Anthropic]
 ---

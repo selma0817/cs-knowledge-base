@@ -6,10 +6,12 @@ aliases:
   - Online LLM Inference
   - LLM Request Lifecycle
 tags:
-  - ai/llm/serving
-  - ai/llm/inference
-  - ai/systems
-  - ai/kv-cache
+  - topic/llm-inference
+  - ttft
+  - tpot
+  - prefill
+  - decode
+  - kv-cache
 status: "status: evergreen"
 ---
 ## Summary

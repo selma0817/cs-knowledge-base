@@ -1,12 +1,11 @@
 ---
 date: 2026-10-07
 tags:
-  - llm
-  - post-training
-  - reinforcement-learning
+  - topic/rl-fine-tuning
   - dapo
   - grpo
-  - interview
+  - dynamic-sampling
+  - clip-higher
 aliases:
   - Decoupled Clip and Dynamic Sampling Policy Optimization
   - DAPO vs GRPO

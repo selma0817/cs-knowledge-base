@@ -7,11 +7,11 @@ aliases:
   - PagedAttention
   - KV Cache Paging
 tags:
-  - ai/llm/inference
-  - ai/llm/serving
-  - ai/kv-cache
-  - ai/system
-  - ai/vllm
+  - topic/llm-inference
+  - vllm
+  - continuous-batching
+  - paged-attention
+  - kv-cache
 status: evergreen
 ---
 ## Summary

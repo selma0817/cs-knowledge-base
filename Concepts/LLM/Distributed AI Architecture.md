@@ -1,5 +1,10 @@
 ---
-tags: [system-design, infrastructure, distributed-systems, vllm]
+tags:
+  - topic/llm-inference
+  - topic/partitioning-scaling
+  - vllm
+  - cache-aware-routing
+  - kv-cache
 date: 2026-06-24
 aliases: [Control Plane, Gateway, Radix Trees, VRAM Eviction]
 ---
