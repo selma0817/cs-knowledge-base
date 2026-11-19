@@ -60,10 +60,10 @@ This shows each card's ID and **topics** (copied from the notes' tags) and catch
 
 Run all three checks on every draft and record the results in its `checks` field. A card that fails gets fixed and re-checked **once**; if it still fails, drop it and say why.
 
-Extract each cited section exactly as pushed, from its heading to the next heading of the same or higher level, and use that same text for checks a and b:
+Extract each cited section exactly as pushed, from its heading to the next heading of the same or higher level (lines inside code blocks never count as headings), and use that same text for checks a and b:
 
 ```bash
-git -C ~/Desktop/knowledge_base show HEAD:"<path>" | awk -v h="<heading>" '/^#+ /{match($0,/^#+/);l=RLENGTH;t=substr($0,l+2);if(t==h){on=1;lvl=l;print;next}else if(on&&l<=lvl){exit}} on'
+~/Desktop/knowledge_base/.agents/skills/distill/extract-section.sh "<path>" "<heading>"
 ```
 
 **a. Grounded** (every card). Read the extracted section. Every claim in `answer`, `explanation` and `rubric` must be stated there. A claim that isn't means trimming the card or going back to step 2. Result: `grounded: "pass"`.
