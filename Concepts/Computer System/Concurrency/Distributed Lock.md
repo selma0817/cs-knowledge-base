@@ -68,6 +68,18 @@ But the watchdog only renews *while the holder is alive*, so two cases differ:
 
 A lock on a **single** Redis master is lost if that master fails before replicating. **Redlock** acquires the lock on a **majority of N independent Redis masters** to tolerate failures. It is **controversial** — Martin Kleppmann argued it is unsafe under clock skew and GC/STW pauses (a paused holder can believe it still holds the lock after expiry). For correctness-critical mutual exclusion, a consensus system ([[Raft Leader Election and Voting|Raft]]/ZooKeeper) or a fencing token is safer; Redis locks are fine when occasional double-execution is tolerable (and consumers are idempotent — see [[Idempotency]]).
 
+## Fencing tokens: the storage rejects a stale holder
+
+A TTL and a watchdog can't stop one failure: a holder that pauses (a long GC pause, say), lets the lock expire, then wakes up still believing it holds the lock and writes. Martin Kleppmann's fix is a **fencing token**: a number that the lock service increases every time a client acquires the lock, sent along with every write ([How to do distributed locking](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html)).
+
+```text
+client 1: acquires the lock, token 33 → long pause → lock expires
+client 2: acquires the lock, token 34 → writes with 34 → storage remembers 34
+client 1: wakes up → writes with 33 → storage rejects it (33 < 34)
+```
+
+The check happens in the **storage service**, not in the lock: it remembers the highest token it has accepted and rejects writes with an older one. A plain Redis `SET ... NX` returns `OK` or nil, not a number, so the increasing token has to come from somewhere else.
+
 ## Relationship to a local mutex
 
 | | [[Mutex]] (in-process) | Distributed lock (Redis) |
@@ -80,6 +92,22 @@ A lock on a **single** Redis master is lost if that master fails before replicat
 ## Interview summary
 
 > A distributed lock is mutual exclusion across machines, typically `SET key <unique-token> NX EX <ttl>` in Redis — one atomic command (SETNX + EXPIRE separately is unsafe). The value is a unique token so release deletes only your own lock, and release is a check-and-delete done atomically in a Lua script (Redis runs Lua with no interleaving), because GET-then-DEL as two commands races. A TTL prevents a dead holder from deadlocking, but if work outlasts the TTL the lock can expire mid-work and double-grant — handled by a watchdog that renews the lease (Redisson). For multi-master fault tolerance there's Redlock, which is contested (clock/GC-pause critiques); correctness-critical locks are better served by Raft/ZooKeeper or fencing tokens, and consumers should be idempotent regardless.
+
+## Common mistakes
+
+From a quiz on 2026-10-30.
+
+### Mistake 1: thinking the key must be unique (mine)
+
+The key is the lock's name: every client competing for the lock uses the same one. It's the **value** that must be unique, a token per holder, so release can tell your lock from the next holder's (see "The unique token, and safe release").
+
+### Mistake 2: thinking GET then DEL is a safe release (mine)
+
+Between the two commands your lock can expire and client B can take it; your `DEL` then deletes B's lock. Compare and delete in one Lua script, which Redis runs with nothing in between (see "Why Lua").
+
+### Mistake 3: thinking the watchdog makes lock expiry safe (mine)
+
+It renews only while the holder is alive. A crashed holder's lock frees when the TTL runs out, but a hung holder's lock never frees unless the lease is capped. And a holder that pauses past expiry can still write after someone else got the lock; only a fencing token checked by the storage stops that (see "Fencing tokens: the storage rejects a stale holder").
 
 ## Related notes
 

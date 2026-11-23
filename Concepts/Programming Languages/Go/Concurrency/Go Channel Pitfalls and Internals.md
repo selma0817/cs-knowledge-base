@@ -372,19 +372,55 @@ A: keeps running and never blocks
 
 While B is parked it is on **no run queue**. The only reference to it is the channel's `recvq`, and its M just picks another G from the P and keeps running. So blocking on a channel **never blocks the OS thread**. A blocking syscall is different: it blocks the M and forces a P handoff. When B wakes, it goes into a **P's run queue** (`runnext`, so it runs soon, often on the same core with a warm cache), not directly onto a thread. See [[GMP Scheduler Internals]].
 
-## Common misconceptions
+## Common mistakes
 
-- **"Receiving from a closed channel panics or blocks."** No. It drains the buffer, then returns zero and `ok == false` immediately, every time.
-- **"`close(nil)` is a no-op."** No. It panics.
-- **"The receiver can close the channel when it's done."** No. The receiver knows the least about pending sends. Use a coordinator, or a separate `done` channel.
-- **"One of several senders can close it."** No. It can't know whether the others are done.
-- **"A buffer of 1 fixes any send leak."** No. It absorbs one unreceived send. A loop that sends many values still leaks on the next send.
-- **"Signal stop by sending a value on `done`."** No. A send blocks if nobody is receiving and wakes only one goroutine. A close never blocks, wakes all of them, and stays on.
-- **"A goroutine leak is a data race."** No. A leak is a goroutine that never exits. A race is unsynchronized access to shared memory.
-- **"In a timeout leak, the caller is stuck."** No. The caller returns; the **sender** is left stranded.
-- **"A blocked receive keeps checking the channel."** No. It's parked: off every run queue and using zero CPU until another goroutine wakes it.
-- **"You must close channels to free them."** No. The GC frees unreachable channels; closing is only a signal.
-- **"A channel belongs to a goroutine, or to main."** No. It's a shared heap object, and each operation runs on the goroutine that calls it.
+### Mistake 1: receiving from a closed channel panics or blocks
+
+No. It drains the buffer, then returns zero and `ok == false` immediately, every time.
+
+### Mistake 2: `close(nil)` is a no-op
+
+No. It panics.
+
+### Mistake 3: the receiver can close the channel when it's done
+
+No. The receiver knows the least about pending sends. Use a coordinator, or a separate `done` channel.
+
+### Mistake 4: one of several senders can close it
+
+No. It can't know whether the others are done.
+
+### Mistake 5: a buffer of 1 fixes any send leak
+
+No. It absorbs one unreceived send. A loop that sends many values still leaks on the next send.
+
+### Mistake 6: signal stop by sending a value on `done`
+
+No. A send blocks if nobody is receiving and wakes only one goroutine. A close never blocks, wakes all of them, and stays on.
+
+### Mistake 7: a goroutine leak is a data race
+
+No. A leak is a goroutine that never exits. A race is unsynchronized access to shared memory.
+
+### Mistake 8: in a timeout leak, the caller is stuck
+
+No. The caller returns; the **sender** is left stranded.
+
+### Mistake 9: a blocked receive keeps checking the channel
+
+No. It's parked: off every run queue and using zero CPU until another goroutine wakes it.
+
+### Mistake 10: you must close channels to free them
+
+No. The GC frees unreachable channels; closing is only a signal.
+
+### Mistake 11: a channel belongs to a goroutine, or to main
+
+No. It's a shared heap object, and each operation runs on the goroutine that calls it.
+
+### Mistake 12: thinking a timed-out fetch leaves nothing behind (mine)
+
+In a quiz on 2026-10-30 I missed this leak completely, though it's Shape 1 above: after `select` returns on the timeout, nobody will ever receive, so the sender parks forever on the unbuffered `ch <- …`. Fix: a buffer of 1, since exactly one send happens, or pass a `context` so the work itself stops (see "Cancellation is cooperative").
 
 ## Interview answer to "channel 的作用和使用注意事项"
 

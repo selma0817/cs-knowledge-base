@@ -171,6 +171,18 @@ Properties:
 
 > MVCC lets readers see a consistent snapshot without blocking writers by keeping row versions; a snapshot is not a data copy but a set of transaction IDs used to pick a visible version. InnoDB reconstructs old versions from the undo log (compact table), while Postgres stores every version in the heap (needs VACUUM, risks XID wraparound); a long-running transaction bloats both. RR takes one snapshot per transaction at first read; RC takes one per statement. Plain SELECT is a snapshot read; UPDATE/DELETE/SELECT FOR UPDATE are current reads that see the latest committed row and lock it. Snapshots don't stop lost updates — fix with atomic SQL, SELECT FOR UPDATE, or an optimistic version column (database CAS). Phantoms are prevented by gap/next-key locks on the index, which lock empty ranges to block inserts, snap to existing-record boundaries (so they over-lock), and balloon to whole-table locks when no index exists.
 
+## Common mistakes
+
+From a quiz on 2026-10-30.
+
+### Mistake 1: thinking READ COMMITTED prevents the lost update (mine)
+
+Lowering the isolation level doesn't help. RC takes a new snapshot per statement, but in the trace in "Lost update: MVCC's trap" both `SELECT`s run before either `UPDATE` commits, so both still read 100 and write values computed from it. The fix has to be in the write: atomic SQL, `SELECT ... FOR UPDATE`, or a version column.
+
+### Mistake 2: thinking every read in a transaction comes from its snapshot (mine)
+
+Only plain `SELECT`s are snapshot reads. `UPDATE`, `DELETE` and `SELECT ... FOR UPDATE` / `FOR SHARE` are current reads: they read the latest committed row and lock it. That's why `SET balance = balance - 30` is safe even at REPEATABLE READ (see "Reads: consistent vs current").
+
 ## Related notes
 
 - [[Transactions and Isolation Levels]]

@@ -179,3 +179,8 @@ See [[Raft Persistent and Volatile State]] for recovery implications.
 - Why is one `Signal()` enough when `commitIndex` jumps by several entries?
 - Why should the applier release `rf.mu` before sending to `applyCh`?
 
+## Common mistakes
+
+### Mistake 1: thinking an old-term entry is committed once a majority stores it (mine)
+
+I knew the rule, that a leader commits only current-term entries by counting, but in a quiz on 2026-10-30 I couldn't give the counterexample. It's the shape in "Why direct commitment requires the current term", Figure 8 in the Raft paper (§5.4.2 of [In Search of an Understandable Consensus Algorithm](https://raft.github.io/raft.pdf)): the term-4 leader spreads `C(term 2)` to a majority and crashes before any term-4 entry commits, so the server holding `D(term 3)` can still win an election and overwrite `C`. Only committing a current-term entry after `C` makes it safe.
