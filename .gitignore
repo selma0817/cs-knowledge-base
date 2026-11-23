@@ -9,3 +9,6 @@
 
 # Obsidian trash
 .trash/
+
+# Study-session state (rounds, answer keys): local and private, see .agents/skills/study
+.study/

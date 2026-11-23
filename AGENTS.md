@@ -10,6 +10,7 @@ These rules apply in every session, with or without a skill loaded, whichever ag
 - `Topics.md` is the list of allowed `topic/` tags. Read it before tagging anything.
 - `Concepts/Interview MOC.md` and the per-area `… MOC.md` notes are indexes. When you add a note, link it from the relevant MOC.
 - `Interview Prep/` holds mock interviews. `Projects/<project>/` holds a project overview and an experiment log.
+- `.study/` (gitignored) holds study-session state: rounds asked, answer keys, plans for next time. It's local and private; never commit it.
 
 ## Note anatomy
 
@@ -67,14 +68,13 @@ The full rules are in `Topics.md`. In short:
 
 ## Learning loop and skills
 
-Learn (dialectical session → note) → interview (questions from these notes) → distill (session → proposed cards → my yes/no → PR to interview-review) → daily review on the site.
+Study (drill: question → my answer → correction → next question, until solid → note) → distill (session → proposed cards → my yes/no → PR to interview-review) → daily review on the site.
 
-Each step has (or will have) a skill in `.agents/skills/<name>/SKILL.md`, in the open Agent Skills format. If your harness doesn't load skills by itself, **open the skill's `SKILL.md` and follow it** whenever the task matches:
+Each step has a skill in `.agents/skills/<name>/SKILL.md`, in the open Agent Skills format. If your harness doesn't load skills by itself, **open the skill's `SKILL.md` and follow it** whenever the task matches:
 
 | Skill | Use when | Status |
 |---|---|---|
+| [study](.agents/skills/study/SKILL.md) | I say "teach me X", "drill me on X", "quiz me", "interview me", "test me on X" or "I don't get X": probing questions, each answer corrected and evaluated, until every part of the concept is solid; then the note | ready |
 | [distill](.agents/skills/distill/SKILL.md) | I say "distill", "make cards" or "turn this into cards", or accept an offer to distill at the end of a session; also "edit card X" / "remove card X" | ready |
-| teach | I want to learn a concept dialectically and end with a note | planned |
-| interview | I want a mock interview from these notes | planned |
 
 `.agents/skills/` holds the only copy of each skill. Harness-specific folders (for example `.claude/skills/<name>`) are symlinks to it, so edit skills in `.agents/skills/` only.
