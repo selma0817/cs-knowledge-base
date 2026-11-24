@@ -98,6 +98,7 @@ tags:
 - [[GMP Scheduler Internals]]
 - [[Go Channel Pitfalls and Internals]]
 - [[Go Map and Slice Thread Safety]]
+- [[Go Closures]]
 - [[Process vs Thread vs Coroutine]]
 - [[Concurrency vs Parallelism]]
 - [[Compare-and-Swap]]
