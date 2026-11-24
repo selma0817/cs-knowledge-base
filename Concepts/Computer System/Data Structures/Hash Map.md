@@ -164,6 +164,33 @@ map.computeIfAbsent(k, key -> compute());          // RIGHT: atomic (lambda runs
 ```
 Also `putIfAbsent`, `compute`, `merge`, and atomic conditional **`remove(key, expectedValue)`** (removes only if currently mapped to that value).
 
+### `putIfAbsent` has two traps; `computeIfAbsent` has neither
+
+Scenario: one rate limiter per user, created on first use.
+
+```java
+Limiter l = map.get(user);
+if (l == null) { l = new Limiter(); map.put(user, l); }   // check-then-act
+return l;
+```
+
+Two threads both see `null`, both build a limiter, both `put`. The second `put` replaces the first, but the first thread still returns its own limiter: an **orphan** that is no longer in the map. That user's requests are now split across two limiters, so the limit no longer holds.
+
+`putIfAbsent` is atomic, but:
+
+1. **It returns the previous value**, which is `null` when it inserted: "the previous value associated with the specified key, or null if there was no mapping for the key". So `return map.putIfAbsent(user, new Limiter());` returns `null` on a user's first request.
+2. **It builds the value eagerly:** `new Limiter()` runs on every call, even when the key already exists, and the extra object is thrown away.
+
+`computeIfAbsent(user, k -> new Limiter())` fixes both: the function "is invoked exactly once per invocation of this method if the key is absent, else not at all", and it returns the value now in the map ([ConcurrentHashMap Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)).
+
+```text
+Real run (Java 19):
+first putIfAbsent returns:  null
+second putIfAbsent returns: limiter-1
+map holds: limiter-1
+computeIfAbsent returns:    limiter-3
+```
+
 **Writes, all cases:** insert into an *empty* bucket = **CAS** (lock-free, single pointer); insert into a *non-empty* bucket = **`synchronized`(head)** then traverse + update/append; **`remove`** = always **`synchronized`(head)** then traverse + unlink (no CAS fast path, since find-then-unlink is multi-step). Concurrent lock-free readers see the node bypassed via the volatile `next`, so they observe a consistent present-or-gone view.
 
 > A plain HashMap corrupts under concurrent writes (lost updates; Java 7's resize could cycle the list into an infinite-loop `get`). ConcurrentHashMap avoids a single global lock: Java 7 striped locks across 16 segments; Java 8 uses CAS on empty buckets and `synchronized` on each bucket's head node (per-bucket granularity), lock-free volatile reads, and cooperative resizing. It bans null keys/values.
@@ -171,6 +198,18 @@ Also `putIfAbsent`, `compute`, `merge`, and atomic conditional **`remove(key, ex
 ## Interview summary
 
 > A hash map maps key → hash code → bucket index (`hash % capacity`) → an O(1) array offset. Collisions are inevitable (pigeonhole) and handled by separate chaining (Java: lists/trees off the array) or open addressing (probing within the array — Python/Go, *not* Java). The table-wide load factor (0.75) triggers resizing: allocate ~2× buckets and rehash every entry (O(n), amortized O(1)); power-of-2 masking splits each bucket in two; resizing can be stop-the-world (Java/Python) or incremental (Go/Redis). A single overloaded bucket degrades to O(n); Java 8 treeifies chains past length 8 (capacity ≥ 64) into a red-black tree (O(log n)) to survive hash-flooding DoS. A plain HashMap is not thread-safe (lost updates; Java 7 resize could infinite-loop); ConcurrentHashMap fixes this with segment striping (Java 7) or CAS + per-bucket `synchronized` (Java 8), and bans nulls. Go and Python randomize the hash seed so collisions cannot be engineered, and use no trees. Hash determinism is required only per-run, which is what makes randomized seeding safe.
+
+## Common mistakes
+
+From a quiz on 2026-10-30.
+
+### Mistake 1: thinking a get-then-put on ConcurrentHashMap is safe because each call is atomic (mine)
+
+Each call is atomic; the sequence isn't. Two threads can both see `null` and both insert, and one of them returns an orphaned object that's no longer in the map (see "`putIfAbsent` has two traps; `computeIfAbsent` has neither"). I needed hints to find this race.
+
+### Mistake 2: thinking `putIfAbsent` is the clean fix (mine)
+
+It closes the race, but it returns `null` when it inserted and builds the value even when the key exists. `computeIfAbsent` builds the value only when it's absent and returns the value in the map.
 
 ## Related notes
 

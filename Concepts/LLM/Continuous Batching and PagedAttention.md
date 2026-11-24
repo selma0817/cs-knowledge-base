@@ -392,6 +392,17 @@ This reduces:
 
 The result is that the same GPU memory can support more active tokens and more concurrent requests.
 
+The vLLM paper states both halves: separating logical and physical blocks lets vLLM "dynamically grow the KV cache memory without reserving it for all positions in advance" (§4.2), and "this allows more requests to fit into memory for batching—hence improving the throughput" (§4.3) ([Kwon et al., SOSP 2023](https://arxiv.org/abs/2309.06180)).
+
+### When blocks run out: preemption, which is not paging
+
+Paging doesn't create memory. When vLLM "exhausts free physical blocks for new tokens", its scheduler preempts some sequences (the latest requests first) and recovers them later in one of two ways (§4.5):
+
+- **Swapping:** copy the evicted blocks to CPU memory, and copy them back when the sequence resumes.
+- **Recomputation:** drop the blocks and recompute the KV cache when the sequence is rescheduled.
+
+So "move the KV cache from GPU memory to CPU memory" is a preemption fallback in the scheduler. PagedAttention itself is the fixed-size blocks and the block table.
+
 ---
 
 ## 12. Continuous Batching vs PagedAttention
@@ -524,6 +535,18 @@ This is why modern LLM serving engines are not just “running a model.” They 
     
 
 ---
+
+## Common mistakes
+
+From a quiz on 2026-10-30.
+
+### Mistake 1: thinking PagedAttention means swapping the KV cache from GPU memory to CPU memory (mine)
+
+Paging here means fixed-size KV blocks plus a block table, allocated on demand, so no request reserves its maximum length up front (sections 9 and 11). Swapping blocks to CPU memory is what vLLM's scheduler does to preempted requests when blocks run out, one of two recovery options next to recomputation (see "When blocks run out: preemption, which is not paging"). I gave swapping, and only with a hint.
+
+### Mistake 2: thinking continuous batching and PagedAttention are independent tricks (mine)
+
+They solve different layers (section 12), but one creates the other's problem. Continuous batching admits and finishes requests at every step, so KV caches start, grow and free at unpredictable times (section 7), and contiguous allocation fragments. PagedAttention's on-demand blocks remove that waste, which lets more requests fit in the batch: the throughput continuous batching is after.
 
 ## Related Concepts
 

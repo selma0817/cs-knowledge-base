@@ -115,6 +115,12 @@ To be observed in practice before studying the fixes in [[DAPO]]:
 
 > GRPO (DeepSeekMath, used for DeepSeek-R1) samples G answers per question, scores them, and uses the group-normalized reward Âᵢ = (Rᵢ − mean)/std as a per-answer advantage shared by all its tokens, replacing PPO's critic. It optimizes PPO's clipped per-token objective min(ρÂ, clip(ρ, 1−ε, 1+ε)Â) with ρ = π_θ/π_old, minus β·KL to a frozen reference model added directly to the loss, averaged over tokens within each answer, then over answers and questions. Tokens shared by good and bad answers cancel, so outcome rewards still assign credit. It needs only the policy and reference in memory (effectively one model with LoRA), but costs G generations per question. Its weak points are groups where every answer gets the same reward (zero gradient), entropy collapse, length effects from per-answer averaging, and noisy truncated answers, which DAPO addresses. With one optimizer step per rollout, clipping is inactive and it reduces to REINFORCE with a group baseline.
 
+## Common mistakes
+
+### Mistake 1: thinking an all-correct group gets Â = 1 (mine)
+
+It gets Â = 0. With Âᵢ = (Rᵢ − mean)/std, every Rᵢ equals the mean, so every numerator is 0; the std is 0 too, and an ε in the denominator only avoids dividing by zero ([[Advantage Estimation]]). The group gives no gradient (see "Known weak points"). In the same quiz (2026-10-30) I named Dynamic Sampling as the fix but couldn't give my own run's numbers: by steps 90–100, about 37% of groups were all correct and 10% all wrong, so mixed groups fell from 72% to about 50% and nearly half of each batch gave no gradient ([[GRPO DAPO Experiment Log]], lesson 3 of the first GRPO run).
+
 ## Related notes
 
 - [[Policy Gradient for LLMs]]

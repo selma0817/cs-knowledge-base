@@ -635,7 +635,9 @@ producer goroutine sends jobs
 main goroutine receives results
 ```
 
-### Mistake 6: a blocking send with no `ctx.Done()` case
+### Mistake 6: a blocking send with no `ctx.Done()` case (mine)
+
+In a coding quiz on 2026-10-30 I needed hints for this.
 
 Bad:
 
@@ -646,7 +648,9 @@ results <- r
 
 once cancellation exists. If the other side has stopped receiving, the sender parks forever: a goroutine leak. Wrap each send in a `select` with `<-ctx.Done()`.
 
-### Mistake 7: calling `wg.Wait()` in main before receiving results
+### Mistake 7: calling `wg.Wait()` in main before receiving results (mine)
+
+In the same quiz I didn't put the closer in its own goroutine.
 
 Bad:
 
@@ -662,6 +666,16 @@ for result := range results {
 Workers block on `results <- r` because nobody is receiving yet, so they never call `wg.Done()`, so `wg.Wait()` never returns.
 
 Put `wg.Wait(); close(results)` in its own closer goroutine.
+
+### Mistake 8: sending the whole slice as one job (mine)
+
+In the same quiz I wrote `jobs <- urls`. A `chan string` carries one URL per send, so it doesn't compile:
+
+```text
+./main.go:6:10: cannot use urls (variable of type []string) as string value in send
+```
+
+Send each one in a loop, each send inside a `select` with `<-ctx.Done()` (see "Code" under "Cancellation with `context`").
 
 ## When to use a worker pool
 

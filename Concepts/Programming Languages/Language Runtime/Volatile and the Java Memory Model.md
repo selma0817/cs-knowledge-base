@@ -20,7 +20,7 @@ aliases:
 
 ## The two guarantees (and the one it does not give)
 
-**1. Visibility.** Without `volatile`, a thread may keep a field in a register / CPU cache / store buffer and **never see another thread's update** (the JMM permits per-thread copies). A `volatile` write is published so other threads see it; a `volatile` read fetches the latest write.
+**1. Visibility.** Without `volatile`, a thread may keep a field's value in a register, or a write may still sit in its core's store buffer, so it may **never see another thread's update** (the JMM permits per-thread copies). The CPU caches themselves are kept coherent (see below). A `volatile` write is published so other threads see it; a `volatile` read fetches the latest write.
 
 ```java
 volatile boolean running = true;   // thread B: running = false
@@ -46,6 +46,18 @@ A CHM `Node` has `final K key; final int hash;` (immutable, safely published) an
 ## Interview summary
 
 > `volatile` gives a field visibility (reads see the latest write; no per-thread stale copies) and ordering (a volatile write happens-before a later volatile read, and the compiler/CPU can't reorder across it), but not atomicity — `x++` on a volatile is still a lost-update race, needing synchronized or CAS. It is implemented with memory barriers; relative to MESI, coherence makes cores agree on a value eventually while volatile's fence makes the write visible now and in order. This is exactly why ConcurrentHashMap can read without locking: val/next and the table slots are volatile, so a reader sees a consistent old-or-new value while writers publish via volatile writes and serialize only against other writers.
+
+## Common mistakes
+
+From a quiz on 2026-10-30.
+
+### Mistake 1: thinking `volatile` makes reads and writes bypass the L1/L2 cache (mine)
+
+The caches are kept coherent by the hardware (MESI), so they aren't where stale values hide. Stale reads come from values kept in registers, writes waiting in store buffers, and reordering by the compiler or CPU. `volatile` inserts barriers that flush the store buffer and forbid reordering (see "Under the hood: memory barriers (and how it relates to MESI)").
+
+### Mistake 2: thinking `volatile` only gives visibility (mine)
+
+It also gives ordering: a volatile write happens-before a later volatile read of that field, and writes before it can't be moved after it. That is what stops another thread from seeing a reference to a half-built object, as in double-checked locking (see "The two guarantees (and the one it does not give)").
 
 ## Related notes
 
